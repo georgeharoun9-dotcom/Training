@@ -18,7 +18,7 @@ body { margin: 0; min-height: 100%; overscroll-behavior-y: none; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 /* No Claude account in this version */
-[data-act="coach"], [data-act="coachask"], [data-act="fmode"][data-v="beskriv"] { display: none !important; }
+[data-act="fmode"][data-v="beskriv"], #labelfile, label[for="labelfile"] { display: none !important; }
 /* Layout: iOS 26 "Liquid Glass" — ambient color field, translucent glass cards, floating capsule tab bar, glass sheets */
 :root {
   --base: #eef0f6;
@@ -209,10 +209,12 @@ tr.done .chk { background: var(--green); color: #fff; box-shadow: inset 0 1px 0 
 /* Floating tab bar + coach button */
 .dock { position: fixed; z-index: 40; left: 0; right: 0; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); pointer-events: none; }
 .dock .in { max-width: 34rem; margin-inline: auto; display: flex; gap: 10px; align-items: center; }
-.tabbar { pointer-events: auto; flex: 1; min-width: 0; border-radius: 999px; padding: 5px; display: grid; grid-template-columns: repeat(5, 1fr); }
+.tabbar { pointer-events: auto; flex: 1; min-width: 0; border-radius: 999px; padding: 5px; display: grid; grid-template-columns: repeat(5, 1fr); position: relative; }
+.tab-ind { position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; border-radius: 999px; z-index: 0; pointer-events: none; background: linear-gradient(160deg, var(--glass-hi), transparent 55%), var(--fill-2); box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 rgba(0, 0, 0, 0.06), 0 2px 10px rgba(0, 0, 0, 0.12); -webkit-backdrop-filter: blur(6px) saturate(200%); backdrop-filter: blur(6px) saturate(200%); will-change: transform, width; }
+.tab { position: relative; z-index: 1; }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 10px; font-weight: 600; color: var(--fg2); padding: 6px 0 5px; border-radius: 999px; transition: background 220ms ease, color 220ms ease; }
 .tab svg { width: 24px; height: 24px; }
-.tab[aria-current="page"] { color: var(--blue); background: var(--fill); }
+.tab[aria-current="page"] { color: var(--blue); }
 .coachbtn { pointer-events: auto; width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--fg); }
 .coachbtn svg { width: 28px; height: 28px; }
 .coachbtn .spark { fill: url(#sparkg); }
@@ -331,6 +333,40 @@ tr.done .chk { background: var(--green); color: #fff; box-shadow: inset 0 1px 0 
 .minibar .t { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .minibar .t span { color: var(--fg2); font-weight: 500; font-variant-numeric: tabular-nums; }
 .minibar .go { height: 38px; padding: 0 16px; border-radius: 99px; background: var(--blue); color: #fff; font-weight: 600; font-size: 15px; display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+/* Home widgets */
+.wgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.w { border-radius: 24px; padding: 14px; min-width: 0; position: relative; display: flex; flex-direction: column; gap: 10px; }
+.w.l { grid-column: span 2; }
+.w.s { min-height: 150px; }
+.w.s .w-big { font-size: 24px; }
+.btn svg { flex: none; }
+.btns .btn { white-space: nowrap; }
+.w-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--fg2); }
+.w-title i { width: 8px; height: 8px; border-radius: 50%; }
+.w-big { font-family: var(--round); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.w-big small { font-size: 15px; color: var(--fg2); font-weight: 600; margin-left: 3px; }
+.w-sub { font-size: 13px; color: var(--fg2); }
+.w .list { background: transparent; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; margin: 0 -14px -6px; }
+.w .ringcard, .w .fsum { padding: 0; }
+.qgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.w.l .qgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.qbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 6px; border-radius: 18px; background: var(--fill); font-size: 12px; font-weight: 600; text-align: center; min-height: 74px; }
+.qbtn .dot { width: 34px; height: 34px; }
+.editing .w { animation: jiggle 0.32s ease-in-out infinite alternate; }
+.editing .w:nth-child(2n) { animation-delay: -0.16s; }
+.editing .w-body { pointer-events: none; }
+@keyframes jiggle { from { transform: rotate(-0.7deg); } to { transform: rotate(0.7deg); } }
+.w-del { position: absolute; top: -8px; left: -8px; width: 28px; height: 28px; border-radius: 50%; background: var(--fg2); color: var(--base); font-weight: 800; font-size: 18px; display: grid; place-items: center; z-index: 2; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.w-edit { display: flex; gap: 6px; justify-content: center; }
+.w-edit button { white-space: nowrap; height: 32px; min-width: 40px; padding: 0 10px; border-radius: 99px; background: var(--fill-2); font-size: 13px; font-weight: 600; }
+/* Scanner */
+.scanbox { position: relative; border-radius: 26px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; background: #000; }
+.scanbox video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.finder { position: absolute; left: 8%; right: 8%; top: 28%; bottom: 28%; border-radius: 18px; border: 3px solid rgba(255, 255, 255, 0.92); box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.38); }
+.laser { position: absolute; left: 5%; right: 5%; top: 50%; height: 2px; background: #ff453a; box-shadow: 0 0 10px #ff453a; animation: scanline 1.5s ease-in-out infinite alternate; }
+@keyframes scanline { from { transform: translateY(-34px); } to { transform: translateY(34px); } }
+.scanbox.ok .finder { border-color: #30d158; }
+@media (prefers-reduced-motion: reduce) { .editing .w { animation: none; } .laser { animation: none; } }
 .plates { display: flex; gap: 6px; flex-wrap: wrap; }
 .plate { font-size: 13px; font-weight: 700; padding: 6px 10px; border-radius: 10px; color: #fff; font-variant-numeric: tabular-nums; }
 .empty { text-align: center; padding: 26px 20px; color: var(--fg2); font-size: 15px; }
@@ -427,7 +463,7 @@ const S = {
   body: { entries: [] }, active: null, loaded: false, mode: 'db', exMenu: -1, confirmCancel: false, progEx: null, timer: null, sheet: null,
   histView: 'kalender', calMonth: null, calDay: null, measure: 'kg', bodyEdit: null,
   coachOpen: false, coach: { msgs: [] }, coachBusy: false, coachDraft: '', coachState: 'ok',
-  food: {}, foods: [], foodDay: null, progView: 'styrka', imagesOK: false, inWorkout: false
+  food: {}, foods: [], foodDay: null, progView: 'styrka', imagesOK: false, inWorkout: false, editHome: false
 };
 
 /* ================= Utils ================= */
@@ -625,42 +661,145 @@ function renderMini() {
   el.innerHTML = `<i class="pulse" aria-hidden="true"></i><span class="t">${esc(a.name)} <span id="miniclock">${a.edit ? 'Redigeras' : clock(Date.now() - a.start)}</span></span><span class="go">${a.edit ? 'Fortsätt ändra' : 'Till passet'}</span>`;
   el.setAttribute('aria-label', 'Gå tillbaka till pågående pass ' + a.name);
 }
+const TAB_ORDER = ['trana', 'program', 'mat', 'historik', 'framsteg'];
+const curTab = () => S.active && S.inWorkout ? 'trana' : S.tab;
+let indPos = null;
 function renderTabs() {
-  const tabs = [['trana', 'Träna', I.dumbbell], ['program', 'Program', I.program], ['mat', 'Mat', I.food], ['historik', 'Historik', I.history], ['framsteg', 'Framsteg', I.chart]];
+  const nav = $('#tabs');
+  if (!nav.dataset.built) {
+    const tabs = [['trana', 'Träna', I.dumbbell], ['program', 'Program', I.program], ['mat', 'Mat', I.food], ['historik', 'Historik', I.history], ['framsteg', 'Framsteg', I.chart]];
+    nav.innerHTML = '<span class="tab-ind" id="tabind" aria-hidden="true"></span>' + tabs.map(([k, l, ic]) => `<button class="tab press" data-act="tab" data-v="${k}">${ic}<span>${l}</span></button>`).join('');
+    nav.dataset.built = '1';
+    window.addEventListener('resize', () => placeIndicator(false));
+  }
   $('#dock').hidden = false;
-  const cur = S.coachOpen ? null : S.active && S.inWorkout ? 'trana' : S.tab;
-  $('#tabs').innerHTML = tabs.map(([k, l, ic]) => `<button class="tab press" data-act="tab" data-v="${k}" ${cur === k ? 'aria-current="page"' : ''}>${ic}<span>${l}</span></button>`).join('');
+  const cur = curTab();
+  nav.querySelectorAll('.tab').forEach(b => { if (b.dataset.v === cur) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  placeIndicator(false);
+}
+function placeIndicator(animate) {
+  const ind = $('#tabind'); const b = document.querySelector(`#tabs .tab[data-v="${curTab()}"]`); if (!ind || !b || !b.offsetWidth) return;
+  const n = { x: b.offsetLeft, w: b.offsetWidth };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (animate && indPos && (indPos.x !== n.x) && ind.animate && !reduce) {
+    const p = indPos; const x0 = Math.min(p.x, n.x), x1 = Math.max(p.x + p.w, n.x + n.w);
+    ind.animate([
+      { transform: `translateX(${p.x}px) scale(1, 1)`, width: p.w + 'px' },
+      { transform: `translateX(${x0}px) scale(1.03, 0.86)`, width: (x1 - x0) + 'px', offset: 0.42 },
+      { transform: `translateX(${n.x - (n.x > p.x ? -4 : 4)}px) scale(0.98, 1.04)`, width: n.w + 'px', offset: 0.78 },
+      { transform: `translateX(${n.x}px) scale(1, 1)`, width: n.w + 'px' }
+    ], { duration: 560, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' });
+    const icon = b.querySelector('svg'); if (icon && icon.animate) icon.animate([{ transform: 'scale(0.82)' }, { transform: 'scale(1.12)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 480, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+  }
+  ind.style.transform = `translateX(${n.x}px)`; ind.style.width = n.w + 'px';
+  indPos = n;
+}
+function swapIn(dir) {
+  const app = $('#app'); if (!app.animate) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const kf = reduce ? [{ opacity: 0 }, { opacity: 1 }] : [
+    { opacity: 0, transform: `translateX(${dir * 34}px) scale(${dir ? 0.975 : 0.96})`, filter: 'blur(10px)' },
+    { opacity: 1, transform: 'none', filter: 'blur(0px)' }
+  ];
+  app.animate(kf, { duration: reduce ? 180 : 480, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' });
+}
+function go(fn) {
+  const from = TAB_ORDER.indexOf(curTab());
+  fn(); S.exMenu = -1; S.editHome = S.editHome && curTab() === 'trana' && !S.inWorkout ? S.editHome : false;
+  const to = TAB_ORDER.indexOf(curTab());
+  render(); window.scrollTo(0, 0);
+  placeIndicator(true); swapIn(Math.sign(to - from));
 }
 const head = (title, eyebrow, right = '') => `<header class="head"><div class="eyebrow">${esc(eyebrow)}</div><div class="head-row"><h1 class="large">${esc(title)}</h1>${right}</div></header>`;
 
-function viewHome() {
+const WIDGETS = {
+  ring: { name: 'Veckomål', desc: 'Ring för veckans pass, svit och volym', sizes: ['l', 's'], color: '#fa114f' },
+  today: { name: 'Dagens pass', desc: 'Föreslaget pass med startknapp', sizes: ['l'], color: '#0a84ff' },
+  food: { name: 'Mat idag', desc: 'Kalorier kvar och makron', sizes: ['s', 'l'], color: '#30d158' },
+  weight: { name: 'Kroppsvikt', desc: 'Senaste vikt och trend', sizes: ['s', 'l'], color: '#ff375f' },
+  quick: { name: 'Genvägar', desc: 'Skanna mat, logga vikt, fråga coachen', sizes: ['l', 's'], color: '#bf5af2' },
+  prs: { name: 'Senaste rekord', desc: 'Dina senaste personbästa', sizes: ['l', 's'], color: '#ff9f0a' },
+  goal: { name: 'Styrkemål', desc: 'Hur nära ditt 1RM-mål du är', sizes: ['s', 'l'], color: '#5ac8fa' },
+  streak: { name: 'Svit', desc: 'Veckor i rad med nått veckomål', sizes: ['s'], color: '#ff6b22' },
+  volume: { name: 'Volym per vecka', desc: 'Stapeldiagram för 8 veckor', sizes: ['l'], color: '#0a84ff' },
+  recent: { name: 'Senaste passen', desc: 'De tre senaste passen', sizes: ['l'], color: '#8e8e93' },
+  days: { name: 'Programdagar', desc: 'Starta valfri dag i programmet', sizes: ['l'], color: '#30b158' },
+  quickstart: { name: 'Snabbstart', desc: 'Kondition, sport och fritt pass', sizes: ['l'], color: '#ff9f0a' }
+};
+const DEFAULT_WIDGETS = [{ t: 'ring', s: 'l' }, { t: 'today', s: 'l' }, { t: 'food', s: 's' }, { t: 'weight', s: 's' }, { t: 'quick', s: 'l' }, { t: 'recent', s: 'l' }];
+const myWidgets = () => (Array.isArray(S.settings.widgets) ? S.settings.widgets : DEFAULT_WIDGETS).filter(w => WIDGETS[w.t]);
+function ringSVG(p, size, stroke, grad, track) {
+  const R = (size - stroke) / 2, C = 2 * Math.PI * R, id = 'rg' + uid();
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="flex:none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${grad[0]}"/><stop offset="1" stop-color="${grad[1]}"/></linearGradient></defs><circle cx="${size / 2}" cy="${size / 2}" r="${R}" fill="none" stroke-width="${stroke}" style="stroke:${track}"/><circle cx="${size / 2}" cy="${size / 2}" r="${R}" fill="none" stroke-width="${stroke}" stroke-linecap="round" stroke="url(#${id})" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - Math.min(1, p))}" transform="rotate(-90 ${size / 2} ${size / 2})" style="${p <= 0 ? 'opacity:0' : ''}"/></svg>`;
+}
+const wTitle = t => `<div class="w-title"><i style="background:${WIDGETS[t].color}"></i>${WIDGETS[t].name}</div>`;
+function widgetBody(t, s) {
   const wk = weekStart(Date.now()); const thisWeek = S.workouts.filter(w => w.start >= wk);
-  const done = thisWeek.length, goal = S.settings.goal; const p = Math.min(1, done / goal);
-  const vol = thisWeek.reduce((s, w) => s + wStats(w).vol, 0); const st = streak();
-  const R = 40, C = 2 * Math.PI * R;
-  const ring = `<svg class="ring" viewBox="0 0 96 96" role="img" aria-label="${done} av ${goal} pass denna vecka"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fa114f"/><stop offset="1" stop-color="#ff6f9c"/></linearGradient></defs><circle cx="48" cy="48" r="${R}" style="stroke:var(--ring-bg)"/><circle cx="48" cy="48" r="${R}" stroke="url(#rg)" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}" transform="rotate(-90 48 48)" style="${p === 0 ? 'opacity:0' : ''}"/></svg>`;
-  const td = todaysDay();
-  const todayCard = td ? `<section class="section"><div class="sec-head"><h2 class="sec-title">${td.later ? 'Nästa pass' : 'Dagens pass'}</h2><button class="link sm" data-act="tab" data-v="program">Ändra program</button></div>
-    <div class="card today"><div class="top"><span class="dot" style="background:${td.day.color}">${initial(td.day.name)}</span><span style="min-width:0"><span class="name" style="display:block">${esc(td.day.name)}</span><span class="small muted">${esc(td.why)}</span></span></div>
-    <div class="chips">${td.day.ex.length ? td.day.ex.map(e => `<span class="chip">${esc(e.name)} ${esc(e.sets)}×${esc(e.reps)}</span>`).join('') : '<span class="small muted">Inga övningar i den här dagen ännu.</span>'}</div>
-    <button class="btn primary press" data-act="startday" data-v="${esc(td.day.id)}">Starta ${esc(td.day.name)}</button></div></section>` : `<section class="card empty"><b>Inget program</b>Skapa dagar under Program, eller be coachen göra ett åt dig.</section>`;
-  const others = S.program.days.filter(d => !td || d.id !== td.day.id).map(d => { const l = lastOf(d.id); return `<button class="tile press" data-act="startday" data-v="${esc(d.id)}"><span class="dot" style="background:${d.color}">${initial(d.name)}</span>${d.wd !== null && d.wd !== undefined ? `<span class="badge">${WD[d.wd]}</span>` : ''}<span class="t">${esc(d.name)}</span><span class="s">${l ? ago(l) : d.ex.length + ' övningar'}</span></button>`; }).join('');
-  const quick = Object.entries(QUICK).map(([k, q]) => `<button class="tile press" data-act="startquick" data-v="${k}"><span class="dot" style="background:${q.color}">${I[k]}</span><span class="t">${q.name}</span><span class="s">${k === 'fritt' ? 'Välj övningar själv' : k === 'sport' ? 'Match eller träning' : 'Tid och distans'}</span></button>`).join('');
-  const recent = S.workouts.slice(0, 3);
-  return `${head('Träna', cap(dateLong(Date.now())))}
-  <section class="card ringcard">${ring}
-    <div class="stats">
+  const goal = S.settings.goal, done = thisWeek.length;
+  if (t === 'ring') {
+    const vol = thisWeek.reduce((a, w) => a + wStats(w).vol, 0), st = streak();
+    if (s === 's') return `${wTitle(t)}<div style="display:flex;align-items:center;gap:10px">${ringSVG(done / goal, 64, 10, ['#fa114f', '#ff6f9c'], 'var(--ring-bg)')}<div><div class="w-big" style="color:var(--ring)">${done}<small>/ ${goal}</small></div><div class="w-sub">pass</div></div></div><div class="w-sub">Svit ${st} ${st === 1 ? 'vecka' : 'veckor'}</div>`;
+    return `<div class="ringcard" style="padding:0">${ringSVG(done / goal, 96, 13, ['#fa114f', '#ff6f9c'], 'var(--ring-bg)')}<div class="stats">
       <div class="stat"><div class="k">Denna vecka</div><div class="v red num">${done}<small>/ ${goal} pass</small></div></div>
       <div class="stat"><div class="k">Svit</div><div class="v num">${st}<small>${st === 1 ? 'vecka' : 'veckor'}</small></div></div>
       <div class="stat"><div class="k">Volym</div><div class="v num">${fmt(vol)}<small>kg</small></div></div>
-      <div class="stat"><div class="k">Veckomål</div><div class="stepper" role="group" aria-label="Veckomål"><button data-act="goal" data-v="-1" aria-label="Minska veckomål">−</button><button data-act="goal" data-v="1" aria-label="Öka veckomål">+</button></div></div>
-    </div>
-  </section>
-  ${todayCard}
-  ${others ? `<section class="section"><h2 class="grp">Andra dagar</h2><div class="tiles">${others}</div></section>` : ''}
-  <section class="section"><h2 class="grp">Snabbstart</h2><div class="tiles">${quick}</div></section>
-  ${recent.length ? `<section class="section"><div class="sec-head"><h2 class="sec-title">Senaste</h2><button class="link sm" data-act="tab" data-v="historik">Visa alla</button></div><div class="list">${recent.map(histRow).join('')}</div></section>` : ''}
+      <div class="stat"><div class="k">Veckomål</div><div class="stepper" role="group" aria-label="Veckomål"><button data-act="goal" data-v="-1" aria-label="Minska veckomål">−</button><button data-act="goal" data-v="1" aria-label="Öka veckomål">+</button></div></div></div></div>`;
+  }
+  if (t === 'today') {
+    const td = todaysDay();
+    if (!td) return `${wTitle(t)}<div class="w-sub">Inget program ännu. Skapa dagar under Program.</div>`;
+    return `<div class="today" style="padding:0"><div class="top"><span class="dot" style="background:${td.day.color}">${initial(td.day.name)}</span><span style="min-width:0;flex:1"><span class="small muted" style="display:block">${td.later ? 'Nästa pass' : 'Dagens pass'}</span><span class="name" style="display:block">${esc(td.day.name)}</span></span><button class="link sm" data-act="tab" data-v="program">Ändra</button></div>
+      <div class="chips">${td.day.ex.length ? td.day.ex.map(e => `<span class="chip">${esc(e.name)} ${esc(e.sets)}×${esc(e.reps)}</span>`).join('') : '<span class="small muted">Inga övningar i den här dagen ännu.</span>'}</div>
+      <button class="btn primary press" data-act="startday" data-v="${esc(td.day.id)}">Starta ${esc(td.day.name)}</button></div>`;
+  }
+  if (t === 'food') {
+    const G = S.settings.food || { kcal: 2500, prot: 150, kolh: 280, fett: 80 }; const ft = dayTotals(dayKey(Date.now())); const left = G.kcal - ft.kcal;
+    const macros = [['prot', 'Protein', G.prot, '#30d158'], ['kolh', 'Kolh.', G.kolh, '#0a84ff'], ['fett', 'Fett', G.fett, '#ff9f0a']];
+    if (s === 's') return `${wTitle(t)}<div style="display:flex;align-items:center;gap:10px">${ringSVG(ft.kcal / G.kcal, 64, 10, ['#30d158', '#64d2ff'], 'var(--fill)')}<div style="min-width:0"><div class="w-big">${fmt(Math.abs(left))}</div><div class="w-sub">${left < 0 ? 'kcal över' : 'kcal kvar'}</div></div></div><div class="w-sub">P ${fmt(ft.prot)} · K ${fmt(ft.kolh)} · F ${fmt(ft.fett)} g</div>`;
+    return `${wTitle(t)}<div style="display:flex;align-items:center;gap:16px">${ringSVG(ft.kcal / G.kcal, 92, 12, ['#30d158', '#64d2ff'], 'var(--fill)')}<div class="macros" style="flex:1"><div class="w-big" style="font-size:24px">${fmt(Math.abs(left))}<small>${left < 0 ? 'kcal över' : 'kcal kvar'}</small></div>${macros.map(([k, l, g, c]) => `<div class="macro"><div class="top"><span>${l}</span><b>${fmt(ft[k])} / ${g} g</b></div><div class="bar"><i style="width:${Math.min(100, ft[k] / g * 100)}%;background:${c}"></i></div></div>`).join('')}</div></div>`;
+  }
+  if (t === 'weight') {
+    const es = S.body.entries.filter(e => num(e.kg) > 0).sort((a, b) => a.d < b.d ? -1 : 1); const cur = es[es.length - 1];
+    if (!cur) return `${wTitle(t)}<div class="w-sub">Ingen vikt loggad ännu.</div><button class="btn tinted sm press" data-act="gobody" style="width:100%">Logga vikt</button>`;
+    const ref = es.filter(e => fromKey(e.d) <= Date.now() - 30 * 86400000).pop() || es[0]; const diff = num(cur.kg) - num(ref.kg);
+    return `${wTitle(t)}<div class="w-big">${fmt(num(cur.kg), 1)}<small>kg</small></div><div class="w-sub">${ref === cur ? 'Senast ' + esc(dateShort(fromKey(cur.d))) : (diff > 0 ? '+' : diff < 0 ? '−' : '±') + fmt(Math.abs(diff), 1) + ' kg sedan ' + esc(dateShort(fromKey(ref.d)))}</div>${s === 'l' ? lineChart(es.map(e => ({ x: fromKey(e.d), y: num(e.kg) })), 'kg', 'var(--ring)') : ''}`;
+  }
+  if (t === 'quick') {
+    const td = todaysDay();
+    const btns = [['foodscan', '', 'Skanna mat', '#30d158', I.camera], ['coach', '', 'Fråga coachen', '#bf5af2', '<svg viewBox="0 0 28 28" width="20" height="20"><path fill="currentColor" d="M14 2.5c.6 4.9 2.2 7.6 4.6 9 1.8 1 3.6 1.3 6.9 1.5-3.3.2-5.1.5-6.9 1.5-2.4 1.4-4 4.1-4.6 9-.6-4.9-2.2-7.6-4.6-9-1.8-1-3.6-1.3-6.9-1.5 3.3-.2 5.1-.5 6.9-1.5 2.4-1.4 4-4.1 4.6-9z"/></svg>'], ['gobody', '', 'Logga vikt', '#ff375f', I.body], ['startday', td ? td.day.id : '', td ? 'Starta ' + td.day.name : 'Starta pass', '#0a84ff', I.dumbbell]];
+    const list = s === 's' ? btns.slice(0, 2) : btns;
+    return `${wTitle(t)}<div class="qgrid">${list.map(([a, v, l, c, ic]) => `<button class="qbtn press" data-act="${a}" data-v="${esc(v)}"><span class="dot" style="background:${c}">${ic.replace('<svg', '<svg width="20" height="20"')}</span>${esc(l)}</button>`).join('')}</div>`;
+  }
+  if (t === 'prs') {
+    const prs = allPRs().slice(0, s === 's' ? 1 : 3);
+    if (!prs.length) return `${wTitle(t)}<div class="w-sub">Inga rekord ännu. Logga ett styrkepass.</div>`;
+    if (s === 's') return `${wTitle(t)}<div class="w-big">${fmtKg(prs[0].best)}<small>kg</small></div><div class="w-sub">${esc(prs[0].n)} · 1RM</div><div class="w-sub">${fmtKg(prs[0].top.kg)} × ${prs[0].top.reps} · ${esc(dateShort(prs[0].t))}</div>`;
+    return `${wTitle(t)}<div class="list">${prs.map(p => `<div class="row" style="min-height:44px;padding-block:8px"><span class="main"><span class="title" style="font-size:16px">${esc(p.n)}</span><span class="sub">${fmtKg(p.top.kg)} kg × ${p.top.reps} · ${esc(dateShort(p.t))}</span></span><span class="end"><b style="color:var(--fg)">${fmtKg(p.best)}</b> kg</span></div>`).join('')}</div>`;
+  }
+  if (t === 'goal') {
+    const gs = (S.settings.goals || []).slice(0, s === 's' ? 1 : 4); const prs = allPRs();
+    if (!gs.length) return `${wTitle(t)}<div class="w-sub">Inga mål ännu.</div><button class="btn tinted sm press" data-act="tab" data-v="framsteg" style="width:100%">Sätt ett mål</button>`;
+    return `${wTitle(t)}${gs.map(g => { const cur = (prs.find(p => p.n === g.name) || {}).best || 0; const p = Math.min(1, cur / g.kg); return `<div><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.name)}</span><b class="num">${Math.round(p * 100)} %</b></div><div class="w-sub">${fmtKg(cur)} av ${fmtKg(g.kg)} kg</div><div class="bar-meter" style="margin-top:4px"><i style="width:${p * 100}%;${p >= 1 ? '' : 'background:var(--blue)'}"></i></div></div>`; }).join('')}`;
+  }
+  if (t === 'streak') { const st = streak(); return `${wTitle(t)}<div class="w-big" style="font-size:44px">${st}</div><div class="w-sub">${st === 1 ? 'vecka' : 'veckor'} i rad med ${goal} pass</div>`; }
+  if (t === 'volume') return `${wTitle(t)}${barChart(weekBars())}`;
+  if (t === 'recent') { const r = S.workouts.slice(0, 3); return `${wTitle(t)}${r.length ? `<div class="list">${r.map(histRow).join('')}</div>` : '<div class="w-sub">Inga pass ännu. Starta ditt första ovan.</div>'}`; }
+  if (t === 'days') return `${wTitle(t)}<div class="tiles">${S.program.days.map(d => { const l = lastOf(d.id); return `<button class="tile press" data-act="startday" data-v="${esc(d.id)}" style="background:var(--fill);box-shadow:none;border-color:transparent"><span class="dot" style="background:${d.color}">${initial(d.name)}</span><span class="t">${esc(d.name)}</span><span class="s">${l ? ago(l) : d.ex.length + ' övningar'}</span></button>`; }).join('') || '<div class="w-sub">Inga dagar ännu.</div>'}</div>`;
+  if (t === 'quickstart') return `${wTitle(t)}<div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">${Object.entries(QUICK).map(([k, q]) => `<button class="tile press" data-act="startquick" data-v="${k}" style="background:var(--fill);box-shadow:none;border-color:transparent;min-height:96px"><span class="dot" style="background:${q.color}">${I[k]}</span><span class="t" style="font-size:15px">${q.name}</span></button>`).join('')}</div>`;
+  return '';
+}
+function viewHome() {
+  const ws = myWidgets(); const ed = S.editHome;
+  const cards = ws.map((w, i) => `<section class="w ${w.s} card" data-wi="${i}">${ed ? `<button class="w-del" data-act="wdel" data-v="${i}" aria-label="Ta bort ${WIDGETS[w.t].name}">−</button>` : ''}<div class="w-body">${widgetBody(w.t, w.s)}</div>${ed ? `<div class="w-edit"><button data-act="wmove" data-v="${i}:-1" aria-label="Flytta upp" ${i === 0 ? 'disabled style="opacity:.35"' : ''}>↑</button>${WIDGETS[w.t].sizes.length > 1 ? `<button data-act="wsize" data-v="${i}">${w.s === 'l' ? 'Gör liten' : 'Gör stor'}</button>` : ''}<button data-act="wmove" data-v="${i}:1" aria-label="Flytta ner" ${i === ws.length - 1 ? 'disabled style="opacity:.35"' : ''}>↓</button></div>` : ''}</section>`).join('');
+  return `${head('Träna', cap(dateLong(Date.now())), `<button class="link ${ed ? 'bold' : ''}" data-act="editHome">${ed ? 'Klar' : 'Redigera'}</button>`)}
+  <div class="wgrid ${ed ? 'editing' : ''}">${cards || '<section class="w l card"><div class="w-sub">Inga widgets. Tryck på Redigera för att lägga till.</div></section>'}</div>
+  ${ed ? `<div class="btns"><button class="btn primary press" data-act="waddsheet">Lägg till widget</button><button class="btn tinted press" data-act="wreset">Återställ</button></div>` : ''}
   <p class="note">Allt sparas på den här telefonen. Ta en backup under Program ibland.</p>`;
+}
+function widgetSheetHTML() {
+  const used = new Set(myWidgets().map(w => w.t));
+  return `<div class="sheet-head"><button class="link" data-act="close">Stäng</button><h2 id="sheet-title">Lägg till widget</h2><span></span></div>
+  <div class="sheet-body"><div class="list">${Object.entries(WIDGETS).map(([k, w]) => `<button class="row press" data-act="wadd" data-v="${k}" ${used.has(k) ? 'disabled style="opacity:.45"' : ''}><span class="dot" style="background:${w.color};width:32px;height:32px"></span><span class="main"><span class="title">${w.name}</span><span class="sub">${w.desc}${w.sizes.length > 1 ? ' · liten eller stor' : ''}</span></span><span class="end small">${used.has(k) ? 'Tillagd' : 'Lägg till'}</span></button>`).join('')}</div></div>`;
 }
 function histRow(w) {
   const st = wStats(w);
@@ -1018,7 +1157,7 @@ function viewFood() {
   const mine = S.foods.slice().reverse();
   return `${head('Mat', isToday ? 'Idag · ' + dateShort(Date.now()) : cap(dateLong(fromKey(day))), nav)}
   <section class="card fsum">${ring}<div class="macros">${macros}</div></section>
-  <div class="btns"><button class="btn primary press" data-act="foodscan">${I.camera.replace('<svg', '<svg width="20" height="20"')} Skanna streckkod</button><button class="btn tinted press" data-act="foodadd" data-v="${defaultMeal()}">Lägg till mat</button></div>
+  <div class="btns"><button class="btn primary press" data-act="foodscan">${I.camera.replace('<svg', '<svg width="20" height="20"')} Skanna</button><button class="btn tinted press" data-act="foodadd" data-v="${defaultMeal()}">Lägg till mat</button></div>
   ${log}
   <section class="section"><h2 class="grp">Alla näringsvärden</h2><div class="list">${NUTR.map(([k, l, u]) => `<div class="row" style="min-height:42px;padding-block:8px"><span class="main" style="${l.startsWith('varav') ? 'padding-left:14px;color:var(--fg2)' : ''}">${cap(l)}</span><span class="end num" style="color:var(--fg)">${nf(t[k], k)} ${u}</span></div>`).join('')}</div></section>
   <section class="section"><div class="sec-head"><h2 class="sec-title">Mina livsmedel</h2><button class="link sm" data-act="newproduct">Nytt</button></div>
@@ -1041,6 +1180,7 @@ function foodAddHTML(d) {
     body = `<label class="vh" for="foodq">Sök livsmedel</label><input class="search" id="foodq" type="search" placeholder="Sök livsmedel eller streckkod" value="${esc(d.q || '')}" autocomplete="off">
     ${mine.length ? `<div class="section"><h3 class="grp">Mina livsmedel</h3><div class="list">${mine.slice(0, 40).map(f => `<button class="row press" data-act="pickfood" data-v="my:${esc(f.id)}"><span class="main"><span class="title">${esc(f.name)}</span><span class="sub">${fmt(num(f.per100.kcal))} kcal / 100 g</span></span></button>`).join('')}</div></div>` : ''}
     ${base.length ? `<div class="section"><h3 class="grp">Vanliga livsmedel · ungefärliga värden</h3><div class="list">${base.map(f => `<button class="row press" data-act="pickfood" data-v="base:${esc(f.name)}"><span class="main"><span class="title">${esc(f.name)}</span><span class="sub">${fmt(f.per100.kcal)} kcal / 100 g</span></span></button>`).join('')}</div></div>` : ''}
+    ${/^\d{8,14}$/.test(q) ? `<button class="btn primary sm press" data-act="codelookup" data-v="${esc(q)}" style="width:100%">Sök streckkod ${esc(q)}</button>` : ''}
     <button class="btn tinted sm press" data-act="newproduct" style="width:100%">Skapa eget livsmedel${q ? ' ”' + esc(d.q.trim()) + '”' : ''}</button>`;
   } else if (d.mode === 'skanna') {
     body = `<div class="card pad stack" style="text-align:center">
@@ -1081,7 +1221,7 @@ function productHTML(d) {
   const f = d.product;
   return `<div class="sheet-head"><button class="link" data-act="close">Avbryt</button><h2 id="sheet-title">${d.isNew ? 'Nytt livsmedel' : 'Ändra livsmedel'}</h2><button class="link bold" data-act="saveproduct">Spara</button></div>
   <div class="sheet-body">
-    ${d.fromAI ? '<p class="note">Avläst av Claude från bilden. Jämför med förpackningen innan du sparar.</p>' : ''}
+    ${d.note ? `<p class="note">${esc(d.note)}</p>` : ''}
     <div class="card pad stack"><label class="lblc" for="pname" style="font-size:12px;color:var(--fg2);display:flex;flex-direction:column;gap:4px">Namn<input class="field" id="pname" data-pf="name" value="${esc(f.name)}" placeholder="T.ex. Proteinbar choklad"></label>
       <div class="nutr-grid"><label for="pcode">Streckkod<input class="inp" id="pcode" data-pf="barcode" inputmode="numeric" value="${esc(f.barcode || '')}" placeholder="Valfritt"></label><label for="pport">Portion (g)<input class="inp" id="pport" data-pf="portion" inputmode="decimal" value="${esc(f.portion || '')}" placeholder="Valfritt"></label></div></div>
     <div class="section"><h3 class="grp">Näringsvärde per 100 g</h3><div class="card pad nutr-grid">${NUTR.map(([k, l, u]) => `<label for="pn-${k}">${cap(l)} (${u})<input class="inp" id="pn-${k}" data-pn="${k}" inputmode="decimal" value="${f.per100[k] !== undefined && f.per100[k] !== null && f.per100[k] !== '' ? esc(String(f.per100[k]).replace('.', ',')) : ''}" placeholder="0"></label>`).join('')}</div></div>
@@ -1105,20 +1245,39 @@ async function decodeBarcode(file) {
   if (sampleFn && S.imagesOK) { try { const r = await sampleFn.json('Bilden visar en streckkod på en matförpackning. Läs av siffrorna som står under streckkoden. Svara med bara JSON: {"kod":"7310865004703"}, eller {"kod":null} om ingen streckkod syns tydligt.', { images: file, modelTier: 'quick' }); const k = r && r.kod ? String(r.kod).replace(/\D/g, '') : ''; if (k.length >= 8) return k; } catch (e) { /* none */ } }
   return null;
 }
-function lookupCode(code) {
-  code = String(code || '').replace(/\D/g, ''); const d = S.sheet && S.sheet.data; if (!d) return;
-  if (code.length < 6) { d.msg = 'Skriv hela streckkoden, oftast 8 eller 13 siffror.'; d.busy = false; renderSheet(); return; }
-  d.code = code; d.busy = false;
-  const p = S.foods.find(f => f.barcode === code);
-  if (p) { openAmount(Object.assign({}, p, { src: 'scan' }), d.meal); toast('Hittade ' + p.name); return; }
-  d.unknown = true; d.msg = ''; renderSheet();
+async function lookupCode(code, meal) {
+  code = String(code || '').replace(/\D/g, ''); meal = meal || 'Allmänt';
+  if (code.length < 8) { toast('Skriv hela streckkoden, oftast 8 eller 13 siffror'); return; }
+  scanner.stop();
+  const mine = S.foods.find(f => f.barcode === code);
+  if (mine) { openAmount(Object.assign({}, mine, { src: 'scan' }), meal); toast('Hittade ' + mine.name); return; }
+  setScanStatus('Söker efter ' + code + '…');
+  let note = 'Varan finns inte i databasen än. Fyll i näringsvärdet per 100 g från förpackningen en gång, sedan hittas den direkt nästa gång.';
+  try {
+    const r = await fetch('https://world.openfoodfacts.org/api/v2/product/' + code + '.json?fields=product_name,product_name_sv,generic_name,brands,nutriments,serving_quantity', { headers: { Accept: 'application/json' } });
+    const j = await r.json();
+    if (j && j.status === 1 && j.product) {
+      const p = j.product, n = p.nutriments || {};
+      const kcal = n['energy-kcal_100g'] !== undefined ? n['energy-kcal_100g'] : n.energy_100g !== undefined ? n.energy_100g / 4.184 : 0;
+      const per100 = { kcal: Math.round(num(kcal)), prot: num(n.proteins_100g), kolh: num(n.carbohydrates_100g), socker: num(n.sugars_100g), fett: num(n.fat_100g), mattat: num(n['saturated-fat_100g']), fiber: num(n.fiber_100g), salt: num(n.salt_100g) };
+      const brand = p.brands ? String(p.brands).split(',')[0].trim() : '';
+      const nm = String(p.product_name_sv || p.product_name || p.generic_name || 'Okänd vara').trim();
+      const prod = { id: 'f_' + uid(), name: (nm + (brand && !nm.toLowerCase().includes(brand.toLowerCase()) ? ' · ' + brand : '')).slice(0, 60), barcode: code, portion: num(p.serving_quantity) || '', per100 };
+      if (per100.kcal || per100.prot || per100.kolh || per100.fett) {
+        S.foods = S.foods.filter(x => x.barcode !== code).concat([prod]); store.saveFoods();
+        openAmount(Object.assign({}, prod, { src: 'scan' }), meal); toast('Hittade ' + prod.name); return;
+      }
+      setSheet('product', { isNew: true, product: prod, meal, note: 'Varan hittades men saknar näringsvärden. Fyll i dem från förpackningen.' }); return;
+    }
+  } catch (e) { note = 'Kunde inte söka just nu, kanske saknas internet. Fyll i näringsvärdet själv, så sparas varan.'; }
+  setSheet('product', { isNew: true, product: { id: 'f_' + uid(), name: '', barcode: code, portion: '', per100: {} }, meal, note });
 }
 async function handleScan(file) {
-  const d = S.sheet.data; d.busy = true; d.unknown = false; d.msg = 'Läser streckkoden…'; renderSheet();
+  const d = S.sheet.data; scanner.stop(); setScanStatus('Läser streckkoden i bilden…');
   const code = await decodeBarcode(file).catch(() => null);
   if (!S.sheet || S.sheet.data !== d) return;
-  if (!code) { d.busy = false; d.msg = 'Hittade ingen streckkod. Ta bilden närmare och rakt framifrån, eller skriv siffrorna.'; renderSheet(); return; }
-  lookupCode(code);
+  if (!code) { setScanStatus('Hittade ingen streckkod i bilden. Ta bilden närmare och rakt framifrån, eller skriv siffrorna.'); return; }
+  lookupCode(code, d.meal);
 }
 async function handleLabel(file) {
   const d = S.sheet.data; if (!sampleFn) return; d.busy = true; d.msg = 'Claude läser näringsdeklarationen…'; d.unknown = false; renderSheet();
@@ -1143,6 +1302,79 @@ async function describeFood() {
   finally { d.busy = false; if (S.sheet && S.sheet.data === d) renderSheet(); }
 }
 
+/* ================= Coach via the Claude app ================= */
+const COACH_EXT = 'Du är min personliga träningscoach. Svara på svenska, kort och konkret. Basera dina råd på min data nedan och nämn siffror därifrån när det hjälper. Hitta inte på pass eller siffror. Vid smärta, yrsel eller skada: säg att jag ska pausa och kontakta vården. Föreslå inga extrema dieter eller mycket lågt kaloriintag. Om du föreslår ett program eller ändringar, skriv det som en lista per dag med övning och set × reps så att jag kan föra in det i min app.';
+const COACH_SUGGEST = ['Vad ska jag köra idag?', 'Hur går det för mig?', 'Varför står bänkpressen still?', 'Gör ett nytt program åt mig', 'Är min kost bra för att bygga muskler?', 'Hur ska jag öka i vikt nästa pass?'];
+function coachPrompt(q) { return COACH_EXT + '\n\nMIN DATA FRÅN TRÄNINGSAPPEN (' + dayKey(Date.now()) + '):\n' + coachContext().slice(0, 6500) + '\n\nMIN FRÅGA: ' + String(q || '').trim(); }
+function coachSheetHTML(d) {
+  return `<div class="sheet-head"><button class="link" data-act="close">Stäng</button><h2 id="sheet-title">Fråga coachen</h2><span></span></div>
+  <div class="sheet-body">
+    <p class="sec-note" style="padding:0">Din fråga skickas till Claude tillsammans med ditt program, dina senaste pass, rekord, mat och vikt. I Claude trycker du bara på skicka.</p>
+    <label class="vh" for="coachq">Din fråga</label><textarea class="field" id="coachq" placeholder="Vad vill du fråga?" style="min-height:96px">${esc(d.q || '')}</textarea>
+    <div class="suggest">${COACH_SUGGEST.map(s => `<button class="glass press" data-act="coachchip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+    <button class="btn primary press" data-act="coachgo">Öppna i Claude</button>
+    <button class="btn tinted sm press" data-act="coachcopy" style="width:100%">Kopiera bara texten</button>
+    ${d.sent ? '<p class="note">Texten är också kopierad. Om Claude öppnas utan text: tryck i skrivrutan och välj Klistra in.</p>' : ''}
+  </div>`;
+}
+function copyText(t) { try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(() => true, () => false); } catch (e) { /* ignore */ } return Promise.resolve(false); }
+
+/* ================= Live barcode scanner ================= */
+const scanner = {
+  stream: null, timer: null, canvas: null, reader: null, n: 0, last: '', hits: 0,
+  async start() {
+    const v = $('#scanvid'), st = $('#scanstatus'); if (!v) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { st.textContent = 'Kameran går inte att använda här. Skriv siffrorna nedan i stället.'; return; }
+    try { this.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } }); }
+    catch (e) { st.textContent = e && e.name === 'NotAllowedError' ? 'Kameran är blockerad. Tillåt kameran för sidan och försök igen, eller skriv siffrorna.' : 'Kunde inte starta kameran. Skriv siffrorna nedan i stället.'; return; }
+    if (!S.sheet || S.sheet.kind !== 'scan' || !document.body.contains(v)) { this.stop(); return; }
+    v.srcObject = this.stream; v.setAttribute('playsinline', ''); v.muted = true; try { await v.play(); } catch (e) { /* ignore */ }
+    const track = this.stream.getVideoTracks()[0];
+    try { const c = track.getCapabilities ? track.getCapabilities() : {}; const adv = {}; if (c.zoom) adv.zoom = Math.min(c.zoom.max, Math.max(c.zoom.min, 1.6)); if (c.focusMode && c.focusMode.includes('continuous')) adv.focusMode = 'continuous'; if (Object.keys(adv).length) await track.applyConstraints({ advanced: [adv] }); } catch (e) { /* ignore */ }
+    st.textContent = 'Håll streckkoden inne i rutan, cirka 15–20 cm bort';
+    this.canvas = document.createElement('canvas'); this.n = 0; this.last = ''; this.hits = 0;
+    if (window.ZXing && !('BarcodeDetector' in window)) { const Z = window.ZXing; this.reader = new Z.MultiFormatReader(); const hints = new Map(); hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E]); this.hints = hints; this.reader.setHints(hints); }
+    this.loop();
+  },
+  loop() {
+    if (!this.stream) return;
+    this.timer = setTimeout(async () => {
+      const v = $('#scanvid'); if (!v || !this.stream) return;
+      if (v.videoWidth) {
+        const vw = v.videoWidth, vh = v.videoHeight, sw = vw * 0.86, sh = vh * 0.5, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+        const scale = Math.min(1, 1100 / sw); const c = this.canvas; c.width = Math.round(sw * scale); c.height = Math.round(sh * scale);
+        const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
+        let code = null;
+        try {
+          if ('BarcodeDetector' in window) { const r = await new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] }).detect(c); if (r && r[0]) code = r[0].rawValue; }
+          else if (this.reader) { const Z = window.ZXing; this.n++; if (this.n % 3 === 0) { this.hints.set(Z.DecodeHintType.TRY_HARDER, true); this.reader.setHints(this.hints); } else if (this.n % 3 === 1) { this.hints.delete(Z.DecodeHintType.TRY_HARDER); this.reader.setHints(this.hints); }
+            const res = this.reader.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c)))); if (res) code = res.getText(); }
+        } catch (e) { /* no code in this frame */ }
+        if (code && /^\d{8,14}$/.test(code)) {
+          if (code === this.last) this.hits++; else { this.last = code; this.hits = 1; }
+          if (this.hits >= 2 || 'BarcodeDetector' in window) { const box = document.querySelector('.scanbox'); if (box) box.classList.add('ok'); try { navigator.vibrate && navigator.vibrate(60); } catch (e) { /* ignore */ } this.stop(); lookupCode(code, S.sheet && S.sheet.data ? S.sheet.data.meal : 'Allmänt'); return; }
+        }
+      }
+      this.loop();
+    }, 90);
+  },
+  stop() { clearTimeout(this.timer); this.timer = null; if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; } const v = $('#scanvid'); if (v) v.srcObject = null; }
+};
+function scanSheetHTML(d) {
+  return `<div class="sheet-head"><button class="link" data-act="close">Stäng</button><h2 id="sheet-title">Skanna streckkod</h2><span></span></div>
+  <div class="sheet-body">
+    <div class="scanbox"><video id="scanvid" playsinline muted autoplay></video><div class="finder"><i class="laser"></i></div></div>
+    <div class="status" id="scanstatus">Startar kameran…</div>
+    ${mealSelect('scanmeal', d.meal)}
+    <form class="card pad form" id="codeform"><label for="codein">Eller skriv siffrorna under streckkoden<input class="inp" id="codein" inputmode="numeric" placeholder="7310…" autocomplete="off"></label><button class="btn tinted sm press" type="submit">Sök</button></form>
+    <label class="btn tinted sm press" for="scanfile" style="width:100%;cursor:pointer">Välj en bild i stället</label><input class="vh" type="file" id="scanfile" accept="image/*">
+    <p class="note">Varor söks i Open Food Facts, en öppen databas. Varor du lägger in själv sparas och hittas direkt nästa gång.</p>
+  </div>`;
+}
+function setSheet(kind, data) { S.sheet = { kind, data }; renderSheet(); $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); }
+function openScanner(meal) { scanner.stop(); setSheet('scan', { meal: meal || 'Allmänt' }); setTimeout(() => scanner.start(), 60); }
+function setScanStatus(t) { const el = $('#scanstatus'); if (el) el.textContent = t; else toast(t); }
+
 /* ================= Rest timer ================= */
 function renderTimer() {
   const el = $('#timer'); const t = S.timer;
@@ -1163,7 +1395,7 @@ setInterval(() => {
 
 /* ================= Sheets ================= */
 function openSheet(kind, data = {}) { S.sheet = { kind, data }; renderSheet(); requestAnimationFrame(() => { $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); }); }
-function closeSheet() { S.sheet = null; $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); }
+function closeSheet() { scanner.stop(); S.sheet = null; $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); }
 function pickerHTML(d) {
   const q = (d.q || '').trim().toLowerCase();
   const used = new Set(d.used || []);
@@ -1216,6 +1448,9 @@ function renderSheet() {
     <div class="btns"><button class="btn tinted sm press" data-act="edithist" data-v="${esc(w.id)}" style="width:100%">Ändra</button><button class="btn tinted sm press" data-act="repeat" data-v="${esc(w.id)}" style="width:100%">Kör igen</button></div>
     ${(w.exercises || []).map(e => `<div class="section"><h3 class="grp">${esc(e.name)}${(w.prs || []).includes(e.name) ? ' · <span class="pill gold">Rekord</span>' : ''}</h3>${e.note ? `<p class="sec-note">${esc(e.note)}</p>` : ''}<div class="list">${e.sets.map((x, i) => `<div class="row" style="min-height:42px;padding-block:8px"><span class="setno t-${x.t || 'n'}" style="display:inline-grid;place-items:center">${x.t ? SET_LABEL[x.t] : i + 1}</span><span class="main num">${setText(x, e.kind)}</span>${e.kind === 'vikt' && work(x) ? `<span class="end small">1RM ${fmtKg(e1rm(num(x.kg), num(x.reps)))}</span>` : ''}</div>`).join('')}</div></div>`).join('')}
     ${d.confirm ? `<div class="card pad stack"><div style="text-align:center">Passet tas bort för gott.</div><button class="btn danger press" data-act="delhistyes" data-v="${esc(w.id)}">Ta bort pass</button><button class="btn tinted press" data-act="delhistno">Behåll</button></div>` : `<button class="btn danger press" data-act="delhist">Ta bort pass</button>`}</div>`;
+  } else if (s.kind === 'scan') { box.innerHTML = scanSheetHTML(d);
+  } else if (s.kind === 'coach') { box.innerHTML = coachSheetHTML(d);
+  } else if (s.kind === 'widgets') { box.innerHTML = widgetSheetHTML();
   } else if (s.kind === 'foodadd') { box.innerHTML = foodAddHTML(d);
   } else if (s.kind === 'amount') { box.innerHTML = amountHTML(d);
   } else if (s.kind === 'product') { box.innerHTML = productHTML(d);
@@ -1250,7 +1485,7 @@ function newEx(name, target, setsN, before) {
   return e;
 }
 function guardActive() { if (S.active) { toast('Avsluta pågående pass först'); return true; } return false; }
-function begin(a) { S.active = a; S.inWorkout = true; S.coachOpen = false; S.timer = null; S.exMenu = -1; S.confirmCancel = false; store.saveActive(true); render(); window.scrollTo(0, 0); if (!a.exercises.length) openSheet('picker', { q: '', target: 'active' }); }
+function begin(a) { S.active = a; S.inWorkout = true; S.coachOpen = false; S.timer = null; S.exMenu = -1; S.confirmCancel = false; S.editHome = false; store.saveActive(true); render(); window.scrollTo(0, 0); placeIndicator(true); swapIn(0); if (!a.exercises.length) openSheet('picker', { q: '', target: 'active' }); }
 function startDay(id) { if (guardActive()) return; const d = dayById(id); if (!d) return; begin({ start: Date.now(), name: d.name, tpl: d.id, exercises: d.ex.map(e => newEx(e.name, e.reps, Math.max(1, Math.min(20, Math.round(num(e.sets)) || 3)))) }); }
 function startQuick(k) { if (guardActive()) return; const q = QUICK[k]; begin({ start: Date.now(), name: q.name, tpl: k, exercises: q.ex.map(n => newEx(n)) }); }
 function editFrom(w) {
@@ -1266,24 +1501,41 @@ document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]'); if (!b || b.disabled) return;
   const act = b.dataset.act, v = b.dataset.v; const d = S.sheet ? S.sheet.data : null;
   switch (act) {
-    case 'tab': if (coachCtl) coachCtl.abort(); S.tab = v; S.coachOpen = false; S.inWorkout = false; S.exMenu = -1; render(); window.scrollTo(0, 0); break;
-    case 'resume': S.coachOpen = false; S.inWorkout = true; render(); window.scrollTo(0, 0); break;
+    case 'tab': if (S.sheet) closeSheet(); go(() => { S.tab = v; S.coachOpen = false; S.inWorkout = false; }); break;
+    case 'resume': go(() => { S.coachOpen = false; S.inWorkout = true; }); break;
+    case 'gobody': if (S.sheet) closeSheet(); go(() => { S.tab = 'framsteg'; S.progView = 'kropp'; S.inWorkout = false; }); break;
+    case 'editHome': S.editHome = !S.editHome; render(); break;
+    case 'wdel': { const ws = myWidgets().slice(); ws.splice(+v, 1); S.settings.widgets = ws; store.saveSettings(); render(); break; }
+    case 'wmove': { const [i, dir] = v.split(':').map(Number); const ws = myWidgets().slice(); const j = i + dir; if (j < 0 || j >= ws.length) break; const t = ws[i]; ws[i] = ws[j]; ws[j] = t; S.settings.widgets = ws; store.saveSettings(); render(); break; }
+    case 'wsize': { const ws = myWidgets().map(w => Object.assign({}, w)); const w = ws[+v]; const sz = WIDGETS[w.t].sizes; w.s = sz[(sz.indexOf(w.s) + 1) % sz.length]; S.settings.widgets = ws; store.saveSettings(); render(); break; }
+    case 'waddsheet': openSheet('widgets'); break;
+    case 'wadd': { const ws = myWidgets().slice(); ws.push({ t: v, s: WIDGETS[v].sizes[0] }); S.settings.widgets = ws; store.saveSettings(); closeSheet(); render(); setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 80); toast(WIDGETS[v].name + ' tillagd'); break; }
+    case 'wreset': S.settings.widgets = DEFAULT_WIDGETS.map(w => Object.assign({}, w)); store.saveSettings(); render(); break;
+    case 'coachchip': { const t = $('#coachq'); if (t) { t.value = v; d.q = v; } break; }
+    case 'coachgo': case 'coachcopy': {
+      const q = (($('#coachq') || {}).value || d.q || '').trim(); if (!q) { toast('Skriv en fråga först'); break; }
+      d.q = q; const text = coachPrompt(q);
+      copyText(text).then(ok => { if (act === 'coachcopy') toast(ok ? 'Kopierat. Klistra in i Claude.' : 'Kunde inte kopiera'); });
+      if (act === 'coachgo') { const a = document.createElement('a'); a.href = 'https://claude.ai/new?q=' + encodeURIComponent(text); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+      d.sent = true; renderSheet(); break;
+    }
+    case 'codelookup': lookupCode(v, d && d.meal); break;
     case 'startday': startDay(v); break;
     case 'startquick': startQuick(v); break;
     case 'goal': S.settings.goal = Math.min(7, Math.max(1, S.settings.goal + +v)); store.saveSettings(); render(); break;
     case 'rest': S.settings.rest = Math.min(600, Math.max(15, S.settings.rest + +v)); store.saveSettings(); render(); break;
     /* coach */
-    case 'coach': S.coachOpen = true; render(); setTimeout(() => { const t = $('#coachin'); if (t && !('ontouchstart' in window)) t.focus(); }, 60); break;
+    case 'coach': openSheet('coach', { q: '' }); break;
     case 'coachclose': if (coachCtl) coachCtl.abort(); S.coachOpen = false; render(); window.scrollTo(0, 0); break;
-    case 'coachask': S.coachOpen = true; render(); coachSend(v); break;
+    case 'coachask': openSheet('coach', { q: v }); break;
     case 'coachstop': if (coachCtl) coachCtl.abort(); break;
     case 'coachclear': if (coachCtl) coachCtl.abort(); S.coach = { msgs: [] }; store.saveCoach(); render(); break;
     case 'applyprop': { const [mi, pi, mode] = v.split(':'); applyProposal(+mi, +pi, mode); break; }
     /* food */
     case 'fday': { if (v === 'today') S.foodDay = dayKey(Date.now()); else { const n = fromKey(fday()) + +v * 86400000; if (n <= midnight(Date.now())) S.foodDay = dayKey(n); } render(); break; }
     case 'foodadd': openSheet('foodadd', { mode: 'sok', meal: v || defaultMeal(), q: '' }); break;
-    case 'foodscan': openSheet('foodadd', { mode: 'skanna', meal: defaultMeal(), q: '' }); break;
-    case 'fmode': d.mode = v; d.msg = ''; renderSheet(); break;
+    case 'foodscan': openScanner(defaultMeal()); break;
+    case 'fmode': if (v === 'skanna') { openScanner(d.meal); break; } d.mode = v; d.msg = ''; renderSheet(); break;
     case 'fmeal': d.meal = v; renderSheet(); break;
     case 'pickfood': { const [src, key] = [v.slice(0, v.indexOf(':')), v.slice(v.indexOf(':') + 1)]; const it = src === 'my' ? S.foods.find(f => f.id === key) : FOODS.find(f => f.name === key); if (it) openAmount(Object.assign({}, it, { src: src === 'my' ? 'egen' : 'bas' }), d.meal); break; }
     case 'amtset': d.g = v; renderSheet(); break;
@@ -1427,6 +1679,7 @@ document.addEventListener('input', ev => {
   if (S.active && S.active.edit && ['ed-date', 'ed-time', 'ed-mins'].includes(t.id)) { S.active.edit[{ 'ed-date': 'date', 'ed-time': 'time', 'ed-mins': 'mins' }[t.id]] = t.value; return; }
   if (t.id === 'foodq' && S.sheet) { S.sheet.data.q = t.value; const pos = t.selectionStart; renderSheet(); const q = $('#foodq'); q.focus(); try { q.setSelectionRange(pos, pos); } catch (e) { /* ignore */ } return; }
   if (t.id === 'amtg' && S.sheet) { S.sheet.data.g = t.value.replace(/[^0-9.,]/g, ''); const pv = $('#amtprev'); if (pv) pv.innerHTML = amountPreview(nutrFor(S.sheet.data.item.per100, S.sheet.data.g)); return; }
+  if (t.id === 'coachq' && S.sheet) { S.sheet.data.q = t.value; return; }
   if (t.id === 'describe' && S.sheet) { S.sheet.data.desc = t.value; return; }
   if (t.dataset.res !== undefined && S.sheet) { S.sheet.data.results[+t.dataset.res].g = t.value.replace(/[^0-9.,]/g, ''); return; }
   if (t.dataset.pf && S.sheet) { S.sheet.data.product[t.dataset.pf] = t.value; return; }
@@ -1468,7 +1721,7 @@ document.addEventListener('change', ev => {
       store.persistLocal(); render(); toast('Backupen är inläst'); }).catch(() => toast('Filen kunde inte läsas'));
     t.value = ''; return;
   }
-  if ((t.id === 'fmealsel' || t.id === 'amtmealsel') && S.sheet) { S.sheet.data.meal = t.value; return; }
+  if ((t.id === 'fmealsel' || t.id === 'amtmealsel' || t.id === 'scanmeal') && S.sheet) { S.sheet.data.meal = t.value; return; }
   const file = t.files && t.files[0]; if (!file || !S.sheet) return;
   if (t.id === 'scanfile') handleScan(file);
   else if (t.id === 'labelfile') handleLabel(file);
@@ -1486,7 +1739,7 @@ document.addEventListener('submit', ev => {
     S.body.entries = S.body.entries.filter(e => e.d !== d && e.d !== S.bodyEdit).concat([entry]);
     S.bodyEdit = null; store.saveBody(); render(); toast('Mätningen är sparad');
   }
-  if (ev.target.id === 'codeform') { lookupCode($('#codein').value); return; }
+  if (ev.target.id === 'codeform') { lookupCode($('#codein').value, S.sheet && S.sheet.data ? S.sheet.data.meal : 'Allmänt'); return; }
   if (ev.target.id === 'foodgoals') {
     const g = {}; [['kcal', 800, 8000], ['prot', 0, 500], ['kolh', 0, 1000], ['fett', 0, 400]].forEach(([k, lo, hi]) => { g[k] = Math.round(Math.min(hi, Math.max(lo, num($('#fg-' + k).value)))); });
     S.settings.food = g; store.saveSettings(); render(); toast('Dagsmålen är sparade'); return;
