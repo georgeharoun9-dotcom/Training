@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Träningsloggen</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -13,7 +13,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
-html { -webkit-text-size-adjust: 100%; height: 100%; }
+html { -webkit-text-size-adjust: 100%; height: 100%; touch-action: pan-x pan-y; }
+body, button, a, label, input, select, textarea { touch-action: manipulation; }
 body { margin: 0; min-height: 100%; overscroll-behavior-y: none; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
@@ -335,7 +336,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .minibar .t span { color: var(--fg2); font-weight: 500; font-variant-numeric: tabular-nums; }
 .minibar .go { height: 38px; padding: 0 16px; border-radius: 99px; background: var(--blue); color: #fff; font-weight: 600; font-size: 15px; display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 /* Home widgets */
-.wgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.wgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; grid-auto-flow: row dense; }
 .w { border-radius: 24px; padding: 14px; min-width: 0; position: relative; display: flex; flex-direction: column; gap: 10px; }
 .w.l { grid-column: span 2; }
 .w.s { min-height: 150px; }
@@ -356,9 +357,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .editing .w { animation: jiggle 0.32s ease-in-out infinite alternate; }
 .editing .w:nth-child(2n) { animation-delay: -0.16s; }
 .editing .w-body { pointer-events: none; }
+.wgrid .w { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.editing .w { touch-action: none; cursor: grab; }
+.w.dragging { animation: none !important; z-index: 20; cursor: grabbing; box-shadow: inset 0 1px 0 var(--glass-hi), 0 24px 50px rgba(0, 0, 0, 0.35); transition: box-shadow 200ms ease; }
+.drag-hint { font-size: 13px; color: var(--fg2); text-align: center; margin: -8px 0 0; }
 @keyframes jiggle { from { transform: rotate(-0.7deg); } to { transform: rotate(0.7deg); } }
 .w-del { position: absolute; top: -8px; left: -8px; width: 28px; height: 28px; border-radius: 50%; background: var(--fg2); color: var(--base); font-weight: 800; font-size: 18px; display: grid; place-items: center; z-index: 2; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .w-edit { display: flex; gap: 6px; justify-content: center; }
+.w-edit:not(:has(button:not(.vh))) { display: none; }
 .w-edit button { white-space: nowrap; height: 32px; min-width: 40px; padding: 0 10px; border-radius: 99px; background: var(--fill-2); font-size: 13px; font-weight: 600; }
 /* Scanner */
 .scanbox { position: relative; border-radius: 26px; overflow: hidden; aspect-ratio: 4 / 3; max-width: 100%; background: #000; }
@@ -791,9 +797,10 @@ function widgetBody(t, s) {
 }
 function viewHome() {
   const ws = myWidgets(); const ed = S.editHome;
-  const cards = ws.map((w, i) => `<section class="w ${w.s} card" data-wi="${i}">${ed ? `<button class="w-del" data-act="wdel" data-v="${i}" aria-label="Ta bort ${WIDGETS[w.t].name}">−</button>` : ''}<div class="w-body">${widgetBody(w.t, w.s)}</div>${ed ? `<div class="w-edit"><button data-act="wmove" data-v="${i}:-1" aria-label="Flytta upp" ${i === 0 ? 'disabled style="opacity:.35"' : ''}>↑</button>${WIDGETS[w.t].sizes.length > 1 ? `<button data-act="wsize" data-v="${i}">${w.s === 'l' ? 'Gör liten' : 'Gör stor'}</button>` : ''}<button data-act="wmove" data-v="${i}:1" aria-label="Flytta ner" ${i === ws.length - 1 ? 'disabled style="opacity:.35"' : ''}>↓</button></div>` : ''}</section>`).join('');
+  const cards = ws.map((w, i) => `<section class="w ${w.s} card" data-wi="${i}">${ed ? `<button class="w-del" data-act="wdel" data-v="${i}" aria-label="Ta bort ${WIDGETS[w.t].name}">−</button>` : ''}<div class="w-body">${widgetBody(w.t, w.s)}</div>${ed ? `<div class="w-edit"><button class="vh" data-act="wmove" data-v="${i}:-1" aria-label="Flytta upp" ${i === 0 ? 'disabled' : ''}>↑</button>${WIDGETS[w.t].sizes.length > 1 ? `<button data-act="wsize" data-v="${i}">${w.s === 'l' ? 'Gör liten' : 'Gör stor'}</button>` : ''}<button class="vh" data-act="wmove" data-v="${i}:1" aria-label="Flytta ner" ${i === ws.length - 1 ? 'disabled' : ''}>↓</button></div>` : ''}</section>`).join('');
   return `${head('Träna', cap(dateLong(Date.now())), `<button class="link ${ed ? 'bold' : ''}" data-act="editHome">${ed ? 'Klar' : 'Redigera'}</button>`)}
-  <div class="wgrid ${ed ? 'editing' : ''}">${cards || '<section class="w l card"><div class="w-sub">Inga widgets. Tryck på Redigera för att lägga till.</div></section>'}</div>
+  ${ed ? '<p class="drag-hint">Håll och dra en widget för att flytta den</p>' : ''}
+  <div class="wgrid ${ed ? 'editing' : ''}" id="wgrid">${cards || '<section class="w l card"><div class="w-sub">Inga widgets. Tryck på Redigera för att lägga till.</div></section>'}</div>
   ${ed ? `<div class="btns"><button class="btn primary press" data-act="waddsheet">Lägg till widget</button><button class="btn tinted press" data-act="wreset">Återställ</button></div>` : ''}
   <p class="note">Allt sparas på den här telefonen. Ta en backup under Program ibland.</p>`;
 }
@@ -1376,6 +1383,90 @@ function setSheet(kind, data) { S.sheet = { kind, data }; renderSheet(); $('#scr
 function openScanner(meal) { scanner.stop(); setSheet('scan', { meal: meal || 'Allmänt' }); setTimeout(() => scanner.start(), 60); }
 function setScanStatus(t) { const el = $('#scanstatus'); if (el) el.textContent = t; else toast(t); }
 
+
+/* ================= Drag and drop for home widgets ================= */
+const drag = { el: null, id: null, sx: 0, sy: 0, px: 0, py: 0, ox: 0, oy: 0, lp: null, moved: false, raf: 0, suppress: false };
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function layoutPos(el) { const t = el.style.transform; el.style.transform = 'none'; const r = el.getBoundingClientRect(); el.style.transform = t; return r; }
+function flip(els, mutate) {
+  const first = new Map(els.map(e => [e, e.getBoundingClientRect()]));
+  mutate();
+  els.forEach(e => {
+    e.getAnimations().filter(a => a.id === 'flip').forEach(a => a.cancel());
+    const f = first.get(e), l = e.getBoundingClientRect(); const dx = f.left - l.left, dy = f.top - l.top;
+    if ((dx || dy) && e.animate && !reduceMotion()) { const a = e.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], { duration: 340, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' }); a.id = 'flip'; }
+  });
+}
+function dragStart(el, e) {
+  drag.el = el; drag.id = e.pointerId; drag.moved = false; drag.swapX = undefined; drag.swapY = undefined;
+  const r = layoutPos(el); drag.ox = e.clientX - r.left; drag.oy = e.clientY - r.top; drag.px = e.clientX; drag.py = e.clientY;
+  el.classList.add('dragging'); try { el.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+  try { navigator.vibrate && navigator.vibrate(12); } catch (x) { /* ignore */ }
+  dragPaint(1.05); autoScroll();
+}
+function dragPaint(scale) {
+  const el = drag.el; if (!el) return; const r = layoutPos(el);
+  el.style.transform = `translate(${drag.px - drag.ox - r.left}px, ${drag.py - drag.oy - r.top}px) scale(${scale || 1.05})`;
+}
+function dragOver() {
+  const el = drag.el, grid = $('#wgrid'); if (!el || !grid) return;
+  const others = [...grid.children].filter(c => c !== el && c.classList.contains('w'));
+  if (performance.now() - (drag.swapAt || 0) < 140) return;
+  // Hit-test against resting positions, not mid-animation ones, so widgets don't swap back and forth
+  const rest = c => { const r = c.getBoundingClientRect(); let dx = 0, dy = 0; try { const m = new DOMMatrixReadOnly(getComputedStyle(c).transform); dx = m.e; dy = m.f; } catch (x) { /* ignore */ } return { l: r.left - dx, r: r.right - dx, t: r.top - dy, b: r.bottom - dy }; };
+  const hit = others.find(c => { const r = rest(c); return drag.px >= r.l - 7 && drag.px <= r.r + 7 && drag.py >= r.t - 7 && drag.py <= r.b + 7; });
+  if (!hit) return;
+  // After a swap, wait for the finger to move again so the layout shift can't swap it straight back
+  const gy = drag.py + scrollY; if (drag.swapX !== undefined && Math.hypot(drag.px - drag.swapX, gy - drag.swapY) < 12) return;
+  drag.swapAt = performance.now(); drag.swapX = drag.px; drag.swapY = gy;
+  const kids = [...grid.children]; const from = kids.indexOf(el), to = kids.indexOf(hit);
+  flip(others, () => { if (to < from) grid.insertBefore(el, hit); else grid.insertBefore(el, hit.nextSibling); });
+  drag.moved = true; dragPaint();
+}
+function autoScroll() {
+  cancelAnimationFrame(drag.raf);
+  const step = () => {
+    if (!drag.el) return;
+    const top = 90, bottom = innerHeight - 150; let v = 0;
+    if (drag.py < top) v = -Math.ceil((top - drag.py) / 6); else if (drag.py > bottom) v = Math.ceil((drag.py - bottom) / 6);
+    if (v) { window.scrollBy(0, v); dragPaint(); }
+    dragOver(); // also re-check while the finger rests, after the cooldown
+    drag.raf = requestAnimationFrame(step);
+  };
+  drag.raf = requestAnimationFrame(step);
+}
+function dragEnd() {
+  const el = drag.el; if (!el) return; cancelAnimationFrame(drag.raf); drag.el = null;
+  const grid = $('#wgrid'); const order = grid ? [...grid.querySelectorAll('.w[data-wi]')].map(w => +w.dataset.wi) : [];
+  const cur = el.style.transform; el.style.transform = '';
+  const done = () => {
+    el.classList.remove('dragging');
+    const ws = myWidgets(); if (order.length === ws.length && order.some((v, i) => v !== i)) { S.settings.widgets = order.map(i => ws[i]); store.saveSettings(); }
+    render();
+  };
+  if (el.animate && !reduceMotion()) { const a = el.animate([{ transform: cur }, { transform: 'translate(0, 0) scale(1)' }], { duration: 380, easing: 'cubic-bezier(0.34, 1.3, 0.64, 1)' }); a.onfinish = done; a.oncancel = done; }
+  else done();
+}
+document.addEventListener('pointerdown', e => {
+  if (S.tab !== 'trana' || S.inWorkout || S.sheet) return;
+  const w = e.target.closest('#wgrid .w'); if (!w) return;
+  if (S.editHome) {
+    if (e.target.closest('.w-del, .w-edit button')) return;
+    e.preventDefault(); dragStart(w, e); return;
+  }
+  // Long press outside edit mode enters edit mode, like the iPhone home screen
+  const sx = e.clientX, sy = e.clientY; clearTimeout(drag.lp);
+  const cancel = () => { clearTimeout(drag.lp); document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', cancel); document.removeEventListener('pointercancel', cancel); };
+  const mv = ev => { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) cancel(); };
+  document.addEventListener('pointermove', mv); document.addEventListener('pointerup', cancel); document.addEventListener('pointercancel', cancel);
+  drag.lp = setTimeout(() => { cancel(); drag.suppress = true; setTimeout(() => { drag.suppress = false; }, 600); try { navigator.vibrate && navigator.vibrate(15); } catch (x) { /* ignore */ } S.editHome = true; render(); }, 480);
+});
+document.addEventListener('pointermove', e => { if (!drag.el || e.pointerId !== drag.id) return; e.preventDefault(); drag.px = e.clientX; drag.py = e.clientY; dragPaint(); dragOver(); }, { passive: false });
+document.addEventListener('pointerup', e => { if (drag.el && e.pointerId === drag.id) dragEnd(); });
+document.addEventListener('pointercancel', e => { if (drag.el && e.pointerId === drag.id) dragEnd(); });
+document.addEventListener('click', e => { if (drag.suppress) { e.stopPropagation(); e.preventDefault(); drag.suppress = false; } }, true);
+document.addEventListener('contextmenu', e => { if (e.target.closest('#wgrid')) e.preventDefault(); });
+
 /* ================= Rest timer ================= */
 function renderTimer() {
   const el = $('#timer'); const t = S.timer;
@@ -1752,6 +1843,10 @@ document.addEventListener('submit', ev => {
 });
 $('#scrim').addEventListener('click', closeSheet);
 
+// No pinch or double-tap zoom: the app is laid out for the phone's width
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+let lastTouchEnd = 0; document.addEventListener('touchend', e => { const now = Date.now(); if (now - lastTouchEnd < 320 && !e.target.closest('input, textarea, select')) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
 renderTabs();
 store.init();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
