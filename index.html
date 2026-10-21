@@ -394,6 +394,23 @@ tr.platerow td { padding: 2px 12px 8px; text-align: left; }
 .qchip.meal { color: var(--green); }
 .qadd { width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; font-size: 22px; font-weight: 500; display: grid; place-items: center; flex: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
 .toast.undo { cursor: pointer; }
+/* Same values for all sets */
+.samebtn { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; margin-right: 6px; font-size: 13px; font-weight: 600; color: var(--fg2); background: var(--fill); border-radius: 99px; padding: 4px 10px 4px 5px; }
+.samebtn .sw2 { width: 30px; height: 18px; border-radius: 99px; background: var(--fill-2); position: relative; transition: background 200ms ease; }
+.samebtn .sw2 i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transition: transform 260ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+.samebtn.on { color: var(--fg); }
+.samebtn.on .sw2 { background: var(--green); }
+.samebtn.on .sw2 i { transform: translateX(12px); }
+.samerow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 6px 16px 4px; }
+.samerow label { font-size: 12px; font-weight: 600; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.02em; display: flex; flex-direction: column; gap: 4px; }
+.samerow .inp { max-width: none; height: 46px; font-size: 22px; border-radius: 14px; }
+.sbubs { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 16px 8px; }
+.sbub { width: 46px; height: 46px; border-radius: 50%; background: var(--fill); font-weight: 700; font-size: 17px; display: grid; place-items: center; color: var(--fg); font-variant-numeric: tabular-nums; transition: background 160ms ease-out, transform 160ms cubic-bezier(0.34, 1.5, 0.64, 1); touch-action: manipulation; }
+.sbub:active { transform: scale(0.88); }
+.sbub.done { background: var(--green); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 3px 10px color-mix(in srgb, var(--green) 40%, transparent); }
+.sbub.add { color: var(--blue); font-size: 24px; font-weight: 500; background: color-mix(in srgb, var(--blue) 12%, transparent); }
+.sbub.removing { animation: none; transform: scale(0.85); background: color-mix(in srgb, var(--red) 30%, transparent); }
+.platerow.same { padding: 0 16px 6px; }
 .plates { display: flex; gap: 6px; flex-wrap: wrap; }
 .plate { font-size: 13px; font-weight: 700; padding: 6px 10px; border-radius: 10px; color: #fff; font-variant-numeric: tabular-nums; }
 .empty { text-align: center; padding: 26px 20px; color: var(--fg2); font-size: 15px; }
@@ -1028,15 +1045,24 @@ function plateRowHTML(kg) {
 }
 function ssRole(ex, i) { const prevLink = i > 0 && ex[i - 1].ss; const nextLink = !!ex[i].ss && i < ex.length - 1; return prevLink && nextLink ? 'mid' : nextLink ? 'top' : prevLink ? 'bottom' : ''; }
 function ssLetter(ex, i) { let g = 0; for (let j = 0; j <= i; j++) { const start = !(j > 0 && ex[j - 1].ss) && (ex[j].ss && j < ex.length - 1); if (start) g++; } return String.fromCharCode(64 + Math.max(1, g)); }
+function sameDefault(e) {
+  if (e.kind !== 'vikt' && e.kind !== 'kropp') return false;
+  const prev = prevSets(e.name, S.active ? S.active.start : Date.now() + 1).filter(work);
+  if (!prev.length) return true;
+  return prev.every(s => num(s.kg) === num(prev[0].kg));
+}
+const isSame = e => (e.kind === 'vikt' || e.kind === 'kropp') && (e.same === undefined ? sameDefault(e) : e.same);
+function sameVals(e) { const ws = e.sets.filter(work); const open = ws.find(s => !s.done) || ws[ws.length - 1] || {}; return open; }
 function viewActive() {
   const a = S.active; const isEdit = !!a.edit;
   const exs = a.exercises.map((e, ei) => {
     const prev = prevSets(e.name, a.start); const k = e.kind; const sg = !a.edit ? suggestFor(e, a.start) : null; const role = ssRole(a.exercises, ei);
     const cols = k === 'vikt' ? ['kg', 'reps'] : k === 'kropp' ? ['reps', 'kg'] : k === 'tid' ? ['min', 'km'] : ['min'];
     const labels = { kg: k === 'kropp' ? '+kg' : 'kg', reps: 'Reps', min: 'Min', km: 'Km' };
-    let n = 0;
+    let n = 0; const same = isSame(e);
     const rows = e.sets.map((s, si) => {
       const label = s.t ? SET_LABEL[s.t] : String(++n);
+      if (same && s.t !== 'w') return '';
       const ph = c => sg && s.t !== 'w' && c === 'kg' && sg.kg ? esc(fmt(sg.kg, 2)) : sg && s.t !== 'w' && c === 'reps' ? esc(sg.reps) : prev[si] && prev[si][c] ? esc(fmt(num(prev[si][c]), 2)) : c === 'reps' && e.target ? esc(e.target) : '';
       return `<tr class="${s.done ? 'done' : ''}"><td><button class="setno t-${s.t || 'n'}" data-act="settype" data-v="${ei}:${si}" aria-label="Settyp för set ${si + 1}: ${s.t === 'w' ? 'uppvärmning' : s.t === 'd' ? 'dropset' : s.t === 'f' ? 'till failure' : 'vanligt'}. Tryck för att byta.">${label}</button></td><td class="prev">${prev[si] ? prevText(prev[si], k) : '–'}</td>${cols.map(c => `<td><input class="inp" id="i-${ei}-${si}-${c}" data-ei="${ei}" data-si="${si}" data-f="${c}" inputmode="${c === 'reps' || c === 'min' ? 'numeric' : 'decimal'}" value="${esc(s[c] ?? '')}" placeholder="${ph(c)}" aria-label="${labels[c]} set ${si + 1}"></td>`).join('')}<td><button class="chk" data-act="done" data-v="${ei}:${si}" aria-label="Klart set ${si + 1}" aria-pressed="${!!s.done}">${I.check}</button></td></tr>`;
     }).join('');
@@ -1046,10 +1072,12 @@ function viewActive() {
         <button class="link sm" data-act="exmove" data-v="${ei}:-1" ${ei === 0 ? 'disabled style="opacity:.35"' : ''}>Flytta upp</button><button class="link sm" data-act="exmove" data-v="${ei}:1" ${ei === a.exercises.length - 1 ? 'disabled style="opacity:.35"' : ''}>Flytta ner</button>
         ${ei < a.exercises.length - 1 ? `<button class="link sm" data-act="sstoggle" data-v="${ei}">${e.ss ? 'Ta bort superset' : 'Superset med nästa övning'}</button>` : ''}
         <button class="link sm" data-act="delset" data-v="${ei}">Ta bort sista set</button><button class="link red sm" data-act="delex" data-v="${ei}">Ta bort övning</button></div>` : '';
-    return `<section class="card ex ${role ? 'in-ss ss-' + role : ''}" data-ei="${ei}"><div class="ex-head"><span style="min-width:0"><span class="ex-name">${esc(e.name)}${role ? `<span class="ss-badge">Superset ${ssLetter(a.exercises, ei)}</span>` : ''}</span><span class="ex-sub">${e.target ? 'Mål ' + esc(e.target) + ' reps · ' : ''}${KIND_LABEL[k]}</span>${sg ? `<button class="sugg ${sg.up ? '' : 'same'} press" data-act="usesugg" data-v="${ei}" title="${esc(sg.why)}">${sg.up ? '↑ ' : ''}${esc(sg.text)}</button>` : ''}</span><button class="link sm" data-act="exmenu" data-v="${ei}" aria-expanded="${S.exMenu === ei}">${S.exMenu === ei ? 'Klar' : 'Ändra'}</button></div>
+    return `<section class="card ex ${role ? 'in-ss ss-' + role : ''}" data-ei="${ei}"><div class="ex-head"><span style="min-width:0"><span class="ex-name">${esc(e.name)}${role ? `<span class="ss-badge">Superset ${ssLetter(a.exercises, ei)}</span>` : ''}</span><span class="ex-sub">${e.target ? 'Mål ' + esc(e.target) + ' reps · ' : ''}${KIND_LABEL[k]}</span><span style="display:flex;flex-wrap:wrap;align-items:center">${k === 'vikt' || k === 'kropp' ? `<button class="samebtn ${same ? 'on' : ''} press" data-act="sametoggle" data-v="${ei}" aria-pressed="${same}"><span class="sw2"><i></i></span>Samma för alla set</button>` : ''}${sg ? `<button class="sugg ${sg.up ? '' : 'same'} press" data-act="usesugg" data-v="${ei}" title="${esc(sg.why)}">${sg.up ? '↑ ' : ''}${esc(sg.text)}</button>` : ''}</span></span><button class="link sm" data-act="exmenu" data-v="${ei}" aria-expanded="${S.exMenu === ei}">${S.exMenu === ei ? 'Klar' : 'Ändra'}</button></div>
       ${e.note && S.exMenu !== ei ? `<div class="ex-note">${esc(e.note)}</div>` : ''}${menu}
-      <table class="sets"><thead><tr><th>Set</th><th>Förra</th>${cols.map(c => `<th>${labels[c]}</th>`).join('')}<th><span class="vh">Klart</span></th></tr></thead><tbody>${rows}</tbody></table>
-      <button class="addset press" data-act="addset" data-v="${ei}">+ Lägg till set</button></section>`;
+      ${!same || rows ? `<table class="sets"><thead><tr><th>${same ? 'Uppv.' : 'Set'}</th><th>Förra</th>${cols.map(c => `<th>${labels[c]}</th>`).join('')}<th><span class="vh">Klart</span></th></tr></thead><tbody>${rows}</tbody></table>` : ''}
+      ${same ? (() => { const v = sameVals(e); const ws = e.sets.map((s, si) => [s, si]).filter(([s]) => work(s)); const pkg = sg && sg.kg ? fmt(sg.kg, 2) : prev[0] && prev[0].kg ? fmt(num(prev[0].kg), 2) : ''; const preps = sg ? sg.reps : prev[0] && prev[0].reps ? prev[0].reps : e.target || '';
+        return `<div class="samerow" id="samerow-${ei}">${(k === 'vikt' ? ['kg', 'reps'] : ['reps', 'kg']).map(c => `<label for="same-${ei}-${c}">${c === 'kg' ? (k === 'kropp' ? 'Extra kg' : 'Kg') : 'Reps'}<input class="inp" id="same-${ei}-${c}" data-same="${ei}" data-f="${c}" data-ei="${ei}" inputmode="${c === 'reps' ? 'numeric' : 'decimal'}" value="${esc(v[c] ?? '')}" placeholder="${esc(c === 'kg' ? pkg : preps)}"></label>`).join('')}</div>
+        <div class="sbubs">${ws.map(([s, si], i) => `<button class="sbub ${s.done ? 'done' : ''}" data-act="done" data-v="${ei}:${si}" data-bub="${ei}:${si}" aria-pressed="${!!s.done}" aria-label="Set ${i + 1}${s.done ? ', klart' : ''}. Håll in för att ta bort.">${s.done ? I.check.replace('<svg', '<svg width="18" height="18"') : i + 1}</button>`).join('')}<button class="sbub add press" data-act="addset" data-v="${ei}" aria-label="Lägg till set">+</button></div>`; })() : `<button class="addset press" data-act="addset" data-v="${ei}">+ Lägg till set</button>`}</section>`;
   }).join('');
   const bar = S.confirmCancel
     ? `<button class="link red bold" data-act="cancelyes">${isEdit ? 'Släng ändringar' : 'Släng pass'}</button><span class="small muted">Säker?</span><button class="link" data-act="cancelno">Behåll</button>`
@@ -1060,7 +1088,7 @@ function viewActive() {
   ${editCard}
   ${exs || '<section class="card empty"><b>Inga övningar än</b>Lägg till den första nedan.</section>'}
   <div class="btns"><button class="btn tinted press" data-act="addex">Lägg till övning</button><button class="btn tinted press" data-act="coach">Fråga coachen</button></div>
-  <p class="legend">Tryck på setnumret för att byta typ: <b style="color:var(--orange)">U</b> uppvärmning · <b style="color:var(--purple)">D</b> dropset · <b style="color:var(--red)">F</b> till failure</p>`;
+  <p class="legend">Med Samma för alla set: tryck på en bubbla när setet är klart, håll in för att ta bort det.<br>Tryck på setnumret för att byta typ: <b style="color:var(--orange)">U</b> uppvärmning · <b style="color:var(--purple)">D</b> dropset · <b style="color:var(--red)">F</b> till failure</p>`;
 }
 
 /* ================= AI coach ================= */
@@ -1832,6 +1860,15 @@ document.addEventListener('pointerdown', e => {
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', cancel); document.addEventListener('pointercancel', cancel);
   drag.lp = setTimeout(() => { cancel(); drag.suppress = true; setTimeout(() => { drag.suppress = false; }, 600); try { navigator.vibrate && navigator.vibrate(15); } catch (x) { /* ignore */ } S.editHome = true; render(); }, 480);
 });
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest && e.target.closest('.sbub[data-bub]'); if (!b || !S.active) return;
+  const [ei, si] = b.dataset.bub.split(':').map(Number); const sx = e.clientX, sy = e.clientY; let tm;
+  const cancel = () => { clearTimeout(tm); tm = null; b.classList.remove('removing'); document.removeEventListener('pointerup', cancel); document.removeEventListener('pointercancel', cancel); document.removeEventListener('pointermove', mv); };
+  const mv = ev => { if (Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8) cancel(); };
+  document.addEventListener('pointerup', cancel); document.addEventListener('pointercancel', cancel); document.addEventListener('pointermove', mv);
+  tm = setTimeout(() => { cancel(); const ex = S.active.exercises[ei]; if (!ex || ex.sets.filter(work).length <= 1) { toast('Övningen behöver minst ett set'); return; } drag.suppress = true; setTimeout(() => { drag.suppress = false; }, 600); try { navigator.vibrate && navigator.vibrate(15); } catch (x) { /* ignore */ } ex.sets.splice(si, 1); store.saveActive(); render(); toast('Setet togs bort'); }, 520);
+  setTimeout(() => { if (tm) b.classList.add('removing'); }, 260);
+});
 document.addEventListener('pointermove', e => { if (!drag.el || e.pointerId !== drag.id) return; e.preventDefault(); drag.px = e.clientX; drag.py = e.clientY; dragPaint(); dragOver(); }, { passive: false });
 document.addEventListener('pointerup', e => { if (drag.el && e.pointerId === drag.id) dragEnd(); });
 document.addEventListener('pointercancel', e => { if (drag.el && e.pointerId === drag.id) dragEnd(); });
@@ -1947,6 +1984,7 @@ function newEx(name, target, setsN, before) {
   const n = setsN || Math.max(k === 'tid' || k === 'sport' ? 1 : 3, prev.length);
   const e = { name, kind: k, sets: Array.from({ length: n }, () => ({})) };
   if (target) e.target = String(target);
+  e.same = sameDefault(e);
   return e;
 }
 function guardActive() { if (S.active) { toast('Avsluta pågående pass först'); return true; } return false; }
@@ -2004,6 +2042,7 @@ document.addEventListener('click', ev => {
     case 'ghdisconnect': ghDisconnect(); break;
     case 'ghraw': openSheet('ghraw'); break;
     case 'stepgoal': S.settings.stepGoal = Math.min(30000, Math.max(1000, (num(S.settings.stepGoal) || 8000) + +v)); store.saveSettings(); render(); break;
+    case 'sametoggle': { const e = S.active.exercises[+v]; const on = !isSame(e); if (on) { const v0 = sameVals(e); e.sets.forEach(s => { if (work(s) && !s.done) ['kg', 'reps'].forEach(c => { if (v0[c]) s[c] = v0[c]; }); }); } e.same = on; store.saveActive(); render(); break; }
     case 'usesugg': { const e = S.active.exercises[+v]; const sg = suggestFor(e, S.active.start); if (!sg) break; e.sets.forEach(s => { if (s.t === 'w' || s.done) return; if (sg.kg) s.kg = String(sg.kg).replace('.', ','); if (!s.reps) s.reps = String(sg.reps); }); store.saveActive(); render(); toast(sg.why); break; }
     case 'sstoggle': { const e = S.active.exercises[+v]; e.ss = !e.ss; if (!e.ss) delete e.ss; S.exMenu = -1; store.saveActive(); render(); toast(e.ss ? 'Superset: vilan startar efter nästa övning' : 'Superset borttaget'); break; }
     case 'codelookup': lookupCode(v, d && d.meal); break;
@@ -2095,7 +2134,7 @@ document.addEventListener('click', ev => {
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 60); break;
     }
     /* active workout */
-    case 'addset': { const e = S.active.exercises[+v]; e.sets.push({}); store.saveActive(); render(); const nx = document.getElementById(`i-${v}-${e.sets.length - 1}-${firstField(e)}`); if (nx) nx.focus(); break; }
+    case 'addset': { const e = S.active.exercises[+v]; if (isSame(e)) { const last = e.sets.filter(work).slice(-1)[0] || {}; const ns = {}; ['kg', 'reps', 'min', 'km'].forEach(c => { if (last[c]) ns[c] = last[c]; }); e.sets.push(ns); store.saveActive(); render(); break; } e.sets.push({}); store.saveActive(); render(); const nx = document.getElementById(`i-${v}-${e.sets.length - 1}-${firstField(e)}`); if (nx) nx.focus(); break; }
     case 'exmenu': S.exMenu = S.exMenu === +v ? -1 : +v; render(); break;
     case 'delset': { const e = S.active.exercises[+v]; if (e.sets.length > 1) e.sets.pop(); store.saveActive(); render(); break; }
     case 'delex': S.active.exercises.splice(+v, 1); S.exMenu = -1; store.saveActive(); render(); break;
@@ -2104,8 +2143,9 @@ document.addEventListener('click', ev => {
     case 'settype': { const [ei, si] = v.split(':').map(Number); const s = S.active.exercises[ei].sets[si]; s.t = SET_TYPES[(SET_TYPES.indexOf(s.t || '') + 1) % SET_TYPES.length]; if (!s.t) delete s.t; store.saveActive(); render(); break; }
     case 'done': {
       const [ei, si] = v.split(':').map(Number); const e = S.active.exercises[ei]; const s = e.sets[si];
+      if (!s.done && !filled(s, e.kind) && isSame(e)) { ['kg', 'reps'].forEach(c => { const inp = document.getElementById(`same-${ei}-${c}`); if (inp && !s[c] && (inp.value || inp.placeholder)) s[c] = String(inp.value || inp.placeholder).replace(/[^0-9.,]/g, ''); }); }
       if (!s.done && !filled(s, e.kind)) { const p = prevSets(e.name, S.active.start)[si]; if (p) ['kg', 'reps', 'min', 'km'].forEach(f => { if (p[f] !== undefined && !s[f]) s[f] = String(p[f]).replace('.', ','); }); }
-      if (!filled(s, e.kind)) { toast('Fyll i setet först'); const f = document.getElementById(`i-${ei}-${si}-${firstField(e)}`); if (f) f.focus(); break; }
+      if (!filled(s, e.kind)) { toast(isSame(e) ? 'Skriv vikt och reps först' : 'Fyll i setet först'); const f = document.getElementById(isSame(e) ? `same-${ei}-${firstField(e)}` : `i-${ei}-${si}-${firstField(e)}`); if (f) f.focus(); break; }
       s.done = !s.done;
       if (s.done && e.ss && ei < S.active.exercises.length - 1) { setTimeout(() => { const nx = document.querySelector(`.card.ex[data-ei="${ei + 1}"]`); if (nx) nx.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }); }, 60); }
       if (s.done && !S.active.edit && !(e.ss && ei < S.active.exercises.length - 1) && (e.kind === 'vikt' || e.kind === 'kropp')) { const total = S.settings.rest * 1000; S.timer = { end: Date.now() + total, total, fired: false }; try { navigator.vibrate && navigator.vibrate(10); } catch (x) { /* ignore */ } }
@@ -2161,6 +2201,7 @@ document.addEventListener('click', ev => {
 document.addEventListener('input', ev => {
   const t = ev.target;
   if (t.id === 'coachin') { S.coachDraft = t.value; autosize(); const btn = $('#composer .send'); if (btn && !S.coachBusy) btn.disabled = !t.value.trim() || S.coachState === 'off'; return; }
+  if (t.dataset.same !== undefined && S.active) { const e = S.active.exercises[+t.dataset.same]; const val = t.value.replace(/[^0-9.,]/g, ''); e.sets.forEach(s => { if (work(s) && !s.done) s[t.dataset.f] = val; }); store.saveActive(); if (t.dataset.f === 'kg') { const r = document.querySelector('.platerow.same'); if (r) r.innerHTML = plateRowHTML(t.value || t.placeholder); } return; }
   if (t.dataset.f && S.active) { const s = S.active.exercises[+t.dataset.ei].sets[+t.dataset.si]; s[t.dataset.f] = t.value.replace(/[^0-9.,]/g, ''); store.saveActive(); if (t.dataset.f === 'kg') { const r = t.closest('tr') && t.closest('tr').nextElementSibling; if (r && r.classList.contains('platerow')) r.firstElementChild.innerHTML = plateRowHTML(t.value || t.placeholder); } return; }
   if (t.dataset.note !== undefined && S.active) { S.active.exercises[+t.dataset.note].note = t.value.slice(0, 200); store.saveActive(); return; }
   if (t.id === 'wname' && S.active) { S.active.name = t.value; store.saveActive(); return; }
@@ -2201,7 +2242,9 @@ document.addEventListener('input', ev => {
 });
 function showPlateRow(inp) {
   document.querySelectorAll('tr.platerow').forEach(r => r.remove());
+  document.querySelectorAll('.platerow.same').forEach(r => r.remove());
   if (!inp || inp.dataset.f !== 'kg' || !S.active) return; const e = S.active.exercises[+inp.dataset.ei]; if (!e || e.kind !== 'vikt') return;
+  if (inp.dataset.same !== undefined) { const row = document.getElementById('samerow-' + inp.dataset.same); if (!row) return; const d = document.createElement('div'); d.className = 'platerow same'; d.innerHTML = plateRowHTML(inp.value || inp.placeholder); row.after(d); return; }
   const tr = inp.closest('tr'); if (!tr) return; const row = document.createElement('tr'); row.className = 'platerow';
   const val = inp.value || inp.placeholder; row.innerHTML = `<td colspan="5">${plateRowHTML(val)}</td>`; tr.after(row);
 }
