@@ -374,10 +374,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .blk-prev .card, .blk-prev .list { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--fill); }
 .eyebrow-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 22px; }
 .eyebrow-row .link { font-size: 15px; text-transform: none; letter-spacing: 0; }
-.sw { position: relative; width: 51px; height: 31px; border-radius: 99px; background: var(--fill-2); flex: none; transition: background 220ms ease; }
-.sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22); transition: transform 280ms cubic-bezier(0.34, 1.3, 0.64, 1); }
-[aria-checked="true"] > .sw { background: var(--green); }
-[aria-checked="true"] > .sw::after { transform: translateX(20px); }
+.tgl { position: relative; display: block; box-sizing: border-box; width: 51px; height: 31px; padding: 0; border: 0; border-radius: 99px; background: var(--fill-2); flex: none; transition: background 220ms ease; }
+.tgl::after { content: ''; position: absolute; top: 50%; left: 2px; width: 27px; height: 27px; margin-top: -13.5px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22); transition: transform 280ms cubic-bezier(0.34, 1.3, 0.64, 1); }
+[aria-checked="true"] > .tgl { background: var(--green); }
+[aria-checked="true"] > .tgl::after { transform: translateX(20px); }
 .row[role="switch"] { width: 100%; text-align: left; }
 .segrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding-block: 10px; }
 .segrow .seg { margin: 0; }
@@ -1841,7 +1841,7 @@ function blkSheetHTML(key) {
 const OPT = { suggest: true, plates: true, autoCollapse: true, sameStart: true, autoRest: true, restSound: false, hints: false, coachBtn: true };
 const opt = k => S.settings.opt && typeof S.settings.opt[k] === 'boolean' ? S.settings.opt[k] : OPT[k];
 function applyTheme() { const t = S.settings.theme; if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
-const swRow = (on, act, v, title, sub) => `<button class="row" role="switch" aria-checked="${on}" data-act="${act}" data-v="${v}"><span class="main"><span class="title">${title}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</span><span class="sw" aria-hidden="true"></span></button>`;
+const swRow = (on, act, v, title, sub) => `<button class="row" role="switch" aria-checked="${on}" data-act="${act}" data-v="${v}"><span class="main"><span class="title">${title}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</span><span class="tgl" aria-hidden="true"></span></button>`;
 const optRow = (k, title, sub) => swRow(opt(k), 'opt', k, title, sub);
 const stepRow = (title, sub, val, act, d, labels) => `<div class="row"><span class="main"><span class="title">${title}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</span><span class="end num">${val}</span><span class="stepper"><button data-act="${act}" data-v="-${d}" aria-label="${labels[0]}">−</button><button data-act="${act}" data-v="${d}" aria-label="${labels[1]}">+</button></span></div>`;
 const segRow = (title, act, cur, items) => `<div class="row segrow"><span class="title">${title}</span><div class="seg" role="group" aria-label="${title}">${items.map(([v, l]) => `<button data-act="${act}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${l}</button>`).join('')}</div></div>`;
