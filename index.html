@@ -411,6 +411,22 @@ tr.platerow td { padding: 2px 12px 8px; text-align: left; }
 .sbub.add { color: var(--blue); font-size: 24px; font-weight: 500; background: color-mix(in srgb, var(--blue) 12%, transparent); }
 .sbub.removing { animation: none; transform: scale(0.85); background: color-mix(in srgb, var(--red) 30%, transparent); }
 .platerow.same { padding: 0 16px 6px; }
+/* Collapsibles */
+.coll-head { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+h2.coll-head, h3.coll-head { display: flex; align-items: center; gap: 6px; }
+.sec-head.coll-head h2, .sec-head.coll-head h3 { display: flex; align-items: center; gap: 6px; }
+.chev2 { display: inline-grid; place-items: center; color: var(--fg3); transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1); transform: rotate(90deg); flex: none; }
+.closed .chev2, .closed > .chev2 { transform: rotate(0deg); }
+.coll-head.closed { opacity: 0.9; }
+.coll-body { display: flex; flex-direction: column; gap: 8px; }
+.coll-body[hidden] { display: none; }
+.section > .coll-body { gap: 8px; }
+.ex-name.coll-name { display: flex; align-items: center; gap: 6px; text-align: left; max-width: 100%; }
+.ex-sum { display: none; font-size: 13px; color: var(--green); font-weight: 600; }
+.ex:has(.coll-name.closed) .ex-sum { display: block; }
+.ex:has(.coll-name.closed) .ex-head { padding-bottom: 6px; }
+.dayhead { display: flex; align-items: center; gap: 12px; padding: 14px 16px; width: 100%; }
+.w-title.coll-head .chev2 { margin-left: auto; }
 .plates { display: flex; gap: 6px; flex-wrap: wrap; }
 .plate { font-size: 13px; font-weight: 700; padding: 6px 10px; border-radius: 10px; color: #fff; font-variant-numeric: tabular-nums; }
 .empty { text-align: center; padding: 26px 20px; color: var(--fg2); font-size: 15px; }
@@ -688,7 +704,8 @@ function allPRs() {
 }
 
 /* ================= Render ================= */
-function render() {
+function render() { renderCore(); enhance($('#app'), S.coachOpen ? 'coach' : S.active && S.inWorkout ? 'pass' : S.tab); }
+function renderCore() {
   renderTabs();
   if (!S.loaded) return;
   const app = $('#app');
@@ -781,7 +798,7 @@ function ringSVG(p, size, stroke, grad, track) {
   const R = (size - stroke) / 2, C = 2 * Math.PI * R, id = 'rg' + uid();
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true" style="flex:none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${grad[0]}"/><stop offset="1" stop-color="${grad[1]}"/></linearGradient></defs><circle cx="${size / 2}" cy="${size / 2}" r="${R}" fill="none" stroke-width="${stroke}" style="stroke:${track}"/><circle cx="${size / 2}" cy="${size / 2}" r="${R}" fill="none" stroke-width="${stroke}" stroke-linecap="round" stroke="url(#${id})" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - Math.min(1, p))}" transform="rotate(-90 ${size / 2} ${size / 2})" style="${p <= 0 ? 'opacity:0' : ''}"/></svg>`;
 }
-const wTitle = t => `<div class="w-title"><i style="background:${WIDGETS[t].color}"></i>${WIDGETS[t].name}</div>`;
+const wTitle = t => `<div class="w-title coll-head" data-coll-t="w:${t}" role="button" tabindex="0"><i style="background:${WIDGETS[t].color}"></i>${WIDGETS[t].name}${CHEV}</div>`;
 function widgetBody(t, s) {
   const wk = weekStart(Date.now()); const thisWeek = S.workouts.filter(w => w.start >= wk);
   const goal = S.settings.goal, done = thisWeek.length;
@@ -840,9 +857,14 @@ function widgetBody(t, s) {
   if (t === 'quickstart') return `${wTitle(t)}<div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">${Object.entries(QUICK).map(([k, q]) => `<button class="tile press" data-act="startquick" data-v="${k}" style="background:var(--fill);box-shadow:none;border-color:transparent;min-height:96px"><span class="dot" style="background:${q.color}">${I[k]}</span><span class="t" style="font-size:15px">${q.name}</span></button>`).join('')}</div>`;
   return '';
 }
+function wrapWidget(t, html) {
+  const end = html.indexOf('</div>', html.indexOf('data-coll-t="w:' + t + '"'));
+  if (!html.startsWith('<div class="w-title') || end < 0) return html;
+  return html.slice(0, end + 6) + `<div class="coll-body" data-coll-b="w:${t}" style="gap:10px">` + html.slice(end + 6) + '</div>';
+}
 function viewHome() {
   const ws = myWidgets(); const ed = S.editHome;
-  const cards = ws.map((w, i) => `<section class="w ${w.s} card" data-wi="${i}">${ed ? `<button class="w-del" data-act="wdel" data-v="${i}" aria-label="Ta bort ${WIDGETS[w.t].name}">−</button>` : ''}<div class="w-body">${widgetBody(w.t, w.s)}</div>${ed ? `<div class="w-edit"><button class="vh" data-act="wmove" data-v="${i}:-1" aria-label="Flytta upp" ${i === 0 ? 'disabled' : ''}>↑</button>${WIDGETS[w.t].sizes.length > 1 ? `<button data-act="wsize" data-v="${i}">${w.s === 'l' ? 'Gör liten' : 'Gör stor'}</button>` : ''}<button class="vh" data-act="wmove" data-v="${i}:1" aria-label="Flytta ner" ${i === ws.length - 1 ? 'disabled' : ''}>↓</button></div>` : ''}</section>`).join('');
+  const cards = ws.map((w, i) => `<section class="w ${w.s} card" data-wi="${i}" data-wt="${w.t}">${ed ? `<button class="w-del" data-act="wdel" data-v="${i}" aria-label="Ta bort ${WIDGETS[w.t].name}">−</button>` : ''}<div class="w-body">${wrapWidget(w.t, widgetBody(w.t, w.s))}</div>${ed ? `<div class="w-edit"><button class="vh" data-act="wmove" data-v="${i}:-1" aria-label="Flytta upp" ${i === 0 ? 'disabled' : ''}>↑</button>${WIDGETS[w.t].sizes.length > 1 ? `<button data-act="wsize" data-v="${i}">${w.s === 'l' ? 'Gör liten' : 'Gör stor'}</button>` : ''}<button class="vh" data-act="wmove" data-v="${i}:1" aria-label="Flytta ner" ${i === ws.length - 1 ? 'disabled' : ''}>↓</button></div>` : ''}</section>`).join('');
   return `${head('Träna', cap(dateLong(Date.now())), `<button class="link ${ed ? 'bold' : ''}" data-act="editHome">${ed ? 'Klar' : 'Redigera'}</button>`)}
   ${ed ? '<p class="drag-hint">Håll och dra en widget för att flytta den</p>' : viewWeekCard()}
   <div class="wgrid ${ed ? 'editing' : ''}" id="wgrid">${cards || '<section class="w l card"><div class="w-sub">Inga widgets. Tryck på Redigera för att lägga till.</div></section>'}</div>
@@ -863,8 +885,8 @@ function histRow(w) {
 function viewProgram() {
   const days = S.program.days;
   const cards = days.map((d, i) => `<section class="card" style="overflow:hidden">
-    <button class="row press" data-act="editday" data-v="${esc(d.id)}" style="padding-block:14px"><span class="dot" style="background:${d.color}">${initial(d.name)}</span><span class="main"><span class="title" style="font-weight:600">${esc(d.name)}</span><span class="sub">Dag ${i + 1}${d.wd !== null && d.wd !== undefined ? ' · ' + cap(WD_LONG[d.wd]) : ''} · ${d.ex.length} övningar</span></span><span class="link sm">Ändra</span></button>
-    ${d.ex.map(e => `<div class="row" style="min-height:40px;padding-block:8px"><span class="main"><span class="title" style="font-size:15px">${esc(e.name)}</span></span><span class="end small">${esc(e.sets)} × ${esc(e.reps)}</span></div>`).join('')}
+    <div class="dayhead coll-head" data-coll-t="day:${esc(d.id)}" role="button" tabindex="0"><span class="dot" style="background:${d.color}">${initial(d.name)}</span><span class="main" style="flex:1;min-width:0"><span class="title" style="font-weight:600;display:block">${esc(d.name)}</span><span class="sub small muted">Dag ${i + 1}${d.wd !== null && d.wd !== undefined ? ' · ' + cap(WD_LONG[d.wd]) : ''} · ${d.ex.length} övningar</span></span><button class="link sm" data-act="editday" data-v="${esc(d.id)}">Ändra</button>${CHEV}</div>
+    <div class="coll-body" data-coll-b="day:${esc(d.id)}" style="gap:0">${d.ex.map((e, j) => `<div class="row" style="min-height:40px;padding-block:8px"><span class="main"><span class="title" style="font-size:15px">${esc(e.name)}${e.ss && j < d.ex.length - 1 ? '<span class="ss-badge">SS</span>' : ''}</span></span><span class="end small">${esc(e.sets)} × ${esc(e.reps)}</span></div>`).join('')}</div>
   </section>`).join('');
   const custom = S.settings.custom || [];
   return `${head('Program', days.length + (days.length === 1 ? ' dag' : ' dagar'), '<button class="link bold" data-act="newday">Ny dag</button>')}
@@ -967,7 +989,7 @@ function viewProgress() {
       <div class="card pad"><div class="muted small">Uppskattat 1RM</div><div class="big-num num">${fmtKg(cur)}<small>kg</small></div>
       <div class="small" style="color:${diff >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:600;margin:4px 0 8px">${pts.length > 1 ? (diff >= 0 ? '+' : '−') + fmtKg(Math.abs(diff)) + ' kg sedan första passet' : 'Första mätningen'}</div>
       ${lineChart(pts, 'kg', 'var(--blue)')}</div>
-      ${reps.length ? `<h3 class="grp" style="margin-top:8px">Bästa vikt per antal reps</h3><div class="list">${reps.map(r => `<div class="row" style="min-height:42px;padding-block:8px"><span class="main"><span class="title" style="font-size:15px">${r} ${r === 1 ? 'rep' : 'reps'}</span></span><span class="end small">${esc(dateShort(byReps[r].t))}</span><span class="num" style="font-weight:600;min-width:4.5rem;text-align:right">${fmtKg(byReps[r].kg)} kg</span></div>`).join('')}</div>` : ''}
+      ${reps.length ? `<div class="section" style="margin:8px 0 0"><h3 class="grp">Bästa vikt per antal reps</h3><div class="list">${reps.map(r => `<div class="row" style="min-height:42px;padding-block:8px"><span class="main"><span class="title" style="font-size:15px">${r} ${r === 1 ? 'rep' : 'reps'}</span></span><span class="end small">${esc(dateShort(byReps[r].t))}</span><span class="num" style="font-weight:600;min-width:4.5rem;text-align:right">${fmtKg(byReps[r].kg)} kg</span></div>`).join('')}</div></div>` : ''}
       <p class="sec-note">1RM räknas fram ur ditt bästa arbetsset varje pass (Epley). Uppvärmningsset räknas inte.</p></section>`;
   }
   const goals = S.settings.goals || [];
@@ -981,15 +1003,15 @@ function viewProgress() {
     <form class="card pad form" id="goalform"><label for="goalex">Övning<select class="field" id="goalex" style="height:42px">${(names.length ? names : ['Bänkpress', 'Knäböj', 'Marklyft']).map(n => `<option>${esc(n)}</option>`).join('')}</select></label><label for="goalkg">Mål (kg)<input class="inp" id="goalkg" inputmode="decimal" placeholder="100" required></label><button class="btn primary sm press" type="submit">Lägg till</button></form>
   </section>
   <section class="section"><h2 class="sec-title" style="padding-inline:4px">Verktyg</h2>
-    <div class="card pad stack"><div style="font-weight:600">Uppvärmning</div>
+    <div class="card pad stack"><div style="font-weight:600;display:flex;align-items:center;gap:6px" class="coll-head" data-coll-t="tool:uppv" role="button" tabindex="0">Uppvärmning<span style="flex:1"></span>${CHEV}</div><div class="coll-body" data-coll-b="tool:uppv">
       <div class="form"><label for="wuKg">Arbetsvikt (kg)<input class="inp" id="wuKg" inputmode="decimal" placeholder="100"></label><label for="wuBar">Stång (kg)<input class="inp" id="wuBar" inputmode="decimal" value="20"></label></div>
-      <div id="wuOut" class="sec-note" style="padding:0">Skriv vikten du ska köra så får du uppvärmningsset.</div></div>
-    <div class="card pad stack"><div style="font-weight:600">Viktskivor på stången</div>
+      <div id="wuOut" class="sec-note" style="padding:0">Skriv vikten du ska köra så får du uppvärmningsset.</div></div></div>
+    <div class="card pad stack"><div style="font-weight:600;display:flex;align-items:center;gap:6px" class="coll-head" data-coll-t="tool:skivor" role="button" tabindex="0">Viktskivor på stången<span style="flex:1"></span>${CHEV}</div><div class="coll-body" data-coll-b="tool:skivor">
       <div class="form"><label for="plateKg">Totalvikt (kg)<input class="inp" id="plateKg" inputmode="decimal" placeholder="100"></label><label for="barKg">Stång (kg)<input class="inp" id="barKg" inputmode="decimal" value="20"></label></div>
-      <div id="plateOut" class="sec-note" style="padding:0">Skriv en vikt så visas skivorna per sida.</div></div>
-    <div class="card pad stack"><div style="font-weight:600">Räkna ut 1RM</div>
+      <div id="plateOut" class="sec-note" style="padding:0">Skriv en vikt så visas skivorna per sida.</div></div></div>
+    <div class="card pad stack"><div style="font-weight:600;display:flex;align-items:center;gap:6px" class="coll-head" data-coll-t="tool:1rm" role="button" tabindex="0">Räkna ut 1RM<span style="flex:1"></span>${CHEV}</div><div class="coll-body" data-coll-b="tool:1rm">
       <div class="form"><label for="rmKg">Vikt (kg)<input class="inp" id="rmKg" inputmode="decimal" placeholder="80"></label><label for="rmReps">Reps<input class="inp" id="rmReps" inputmode="numeric" placeholder="8"></label></div>
-      <div id="rmOut" class="sec-note" style="padding:0">Fyll i ett set du klarat.</div></div>
+      <div id="rmOut" class="sec-note" style="padding:0">Fyll i ett set du klarat.</div></div></div>
   </section>`;
 }
 
@@ -1072,12 +1094,12 @@ function viewActive() {
         <button class="link sm" data-act="exmove" data-v="${ei}:-1" ${ei === 0 ? 'disabled style="opacity:.35"' : ''}>Flytta upp</button><button class="link sm" data-act="exmove" data-v="${ei}:1" ${ei === a.exercises.length - 1 ? 'disabled style="opacity:.35"' : ''}>Flytta ner</button>
         ${ei < a.exercises.length - 1 ? `<button class="link sm" data-act="sstoggle" data-v="${ei}">${e.ss ? 'Ta bort superset' : 'Superset med nästa övning'}</button>` : ''}
         <button class="link sm" data-act="delset" data-v="${ei}">Ta bort sista set</button><button class="link red sm" data-act="delex" data-v="${ei}">Ta bort övning</button></div>` : '';
-    return `<section class="card ex ${role ? 'in-ss ss-' + role : ''}" data-ei="${ei}"><div class="ex-head"><span style="min-width:0"><span class="ex-name">${esc(e.name)}${role ? `<span class="ss-badge">Superset ${ssLetter(a.exercises, ei)}</span>` : ''}</span><span class="ex-sub">${e.target ? 'Mål ' + esc(e.target) + ' reps · ' : ''}${KIND_LABEL[k]}</span><span style="display:flex;flex-wrap:wrap;align-items:center">${k === 'vikt' || k === 'kropp' ? `<button class="samebtn ${same ? 'on' : ''} press" data-act="sametoggle" data-v="${ei}" aria-pressed="${same}"><span class="sw2"><i></i></span>Samma för alla set</button>` : ''}${sg ? `<button class="sugg ${sg.up ? '' : 'same'} press" data-act="usesugg" data-v="${ei}" title="${esc(sg.why)}">${sg.up ? '↑ ' : ''}${esc(sg.text)}</button>` : ''}</span></span><button class="link sm" data-act="exmenu" data-v="${ei}" aria-expanded="${S.exMenu === ei}">${S.exMenu === ei ? 'Klar' : 'Ändra'}</button></div>
+    return `<section class="card ex ${role ? 'in-ss ss-' + role : ''}" data-ei="${ei}"><div class="ex-head"><span style="min-width:0"><button class="ex-name coll-name" data-coll-t="ex:${a.start}:${ei}" aria-expanded="true">${esc(e.name)}${role ? `<span class="ss-badge">Superset ${ssLetter(a.exercises, ei)}</span>` : ''}${CHEV}</button><span class="ex-sum">${(() => { const ws = e.sets.filter(work); const dn = ws.filter(s => s.done); const last = dn[dn.length - 1] || ws[0] || {}; return `${dn.length}/${ws.length} set klara${last.kg || last.reps ? ' · ' + (k === 'vikt' ? fmtKg(num(last.kg)) + ' kg × ' + num(last.reps) : setText(last, k)) : ''}`; })()}</span><span class="ex-sub">${e.target ? 'Mål ' + esc(e.target) + ' reps · ' : ''}${KIND_LABEL[k]}</span><span style="display:flex;flex-wrap:wrap;align-items:center">${k === 'vikt' || k === 'kropp' ? `<button class="samebtn ${same ? 'on' : ''} press" data-act="sametoggle" data-v="${ei}" aria-pressed="${same}"><span class="sw2"><i></i></span>Samma för alla set</button>` : ''}${sg ? `<button class="sugg ${sg.up ? '' : 'same'} press" data-act="usesugg" data-v="${ei}" title="${esc(sg.why)}">${sg.up ? '↑ ' : ''}${esc(sg.text)}</button>` : ''}</span></span><button class="link sm" data-act="exmenu" data-v="${ei}" aria-expanded="${S.exMenu === ei}">${S.exMenu === ei ? 'Klar' : 'Ändra'}</button></div><div class="coll-body" style="gap:0" data-coll-b="ex:${a.start}:${ei}" data-coll-def="${(() => { const ws = e.sets.filter(work); return ws.length && ws.every(s => s.done) && S.exMenu !== ei ? 1 : 0; })()}">
       ${e.note && S.exMenu !== ei ? `<div class="ex-note">${esc(e.note)}</div>` : ''}${menu}
       ${!same || rows ? `<table class="sets"><thead><tr><th>${same ? 'Uppv.' : 'Set'}</th><th>Förra</th>${cols.map(c => `<th>${labels[c]}</th>`).join('')}<th><span class="vh">Klart</span></th></tr></thead><tbody>${rows}</tbody></table>` : ''}
       ${same ? (() => { const v = sameVals(e); const ws = e.sets.map((s, si) => [s, si]).filter(([s]) => work(s)); const pkg = sg && sg.kg ? fmt(sg.kg, 2) : prev[0] && prev[0].kg ? fmt(num(prev[0].kg), 2) : ''; const preps = sg ? sg.reps : prev[0] && prev[0].reps ? prev[0].reps : e.target || '';
         return `<div class="samerow" id="samerow-${ei}">${(k === 'vikt' ? ['kg', 'reps'] : ['reps', 'kg']).map(c => `<label for="same-${ei}-${c}">${c === 'kg' ? (k === 'kropp' ? 'Extra kg' : 'Kg') : 'Reps'}<input class="inp" id="same-${ei}-${c}" data-same="${ei}" data-f="${c}" data-ei="${ei}" inputmode="${c === 'reps' ? 'numeric' : 'decimal'}" value="${esc(v[c] ?? '')}" placeholder="${esc(c === 'kg' ? pkg : preps)}"></label>`).join('')}</div>
-        <div class="sbubs">${ws.map(([s, si], i) => `<button class="sbub ${s.done ? 'done' : ''}" data-act="done" data-v="${ei}:${si}" data-bub="${ei}:${si}" aria-pressed="${!!s.done}" aria-label="Set ${i + 1}${s.done ? ', klart' : ''}. Håll in för att ta bort.">${s.done ? I.check.replace('<svg', '<svg width="18" height="18"') : i + 1}</button>`).join('')}<button class="sbub add press" data-act="addset" data-v="${ei}" aria-label="Lägg till set">+</button></div>`; })() : `<button class="addset press" data-act="addset" data-v="${ei}">+ Lägg till set</button>`}</section>`;
+        <div class="sbubs">${ws.map(([s, si], i) => `<button class="sbub ${s.done ? 'done' : ''}" data-act="done" data-v="${ei}:${si}" data-bub="${ei}:${si}" aria-pressed="${!!s.done}" aria-label="Set ${i + 1}${s.done ? ', klart' : ''}. Håll in för att ta bort.">${s.done ? I.check.replace('<svg', '<svg width="18" height="18"') : i + 1}</button>`).join('')}<button class="sbub add press" data-act="addset" data-v="${ei}" aria-label="Lägg till set">+</button></div>`; })() : `<button class="addset press" data-act="addset" data-v="${ei}">+ Lägg till set</button>`}</div></section>`;
   }).join('');
   const bar = S.confirmCancel
     ? `<button class="link red bold" data-act="cancelyes">${isEdit ? 'Släng ändringar' : 'Släng pass'}</button><span class="small muted">Säker?</span><button class="link" data-act="cancelno">Behåll</button>`
@@ -1709,6 +1731,57 @@ function ghRawHTML() {
   <div class="sheet-body"><p class="sec-note" style="padding:0">${Object.keys(ghRaw).length ? 'Ta en skärmdump och skicka till Claude om värdena ser fel ut.' : 'Ingen data hämtad i den här sessionen. Tryck Uppdatera nu först.'}</p><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;line-height:1.35;background:var(--fill);border-radius:14px;padding:12px;margin:0;max-height:60vh;overflow:auto">${esc(short)}</pre></div>`;
 }
 
+/* ================= Collapsible sections ================= */
+const COLL_KEY = 'traning-coll';
+let collState = (() => { try { return JSON.parse(localStorage.getItem(COLL_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+const CHEV = '<span class="chev2" aria-hidden="true"><svg viewBox="0 0 12 12" width="12" height="12"><path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+const CLOSED_DEFAULT = [
+  /^program:(egna övningar|inställningar|fitbit|backup)/,
+  /^mat:(alla näringsvärden|mina livsmedel|dagsmål)/,
+  /^framsteg:(mål|verktyg|bästa vikt|mätningar|arbetsset per muskel)/,
+  /^foodadd:(mina livsmedel|vanliga livsmedel)/,
+  /^tool:/, /^day:/
+];
+function collDefault(key) {
+  if (/^historik:[a-zåäö]+ \d{4}$/.test(key)) return key !== 'historik:' + new Date().toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' }).toLowerCase();
+  return CLOSED_DEFAULT.some(r => r.test(key));
+}
+function enhance(root, scope, forceOpen) {
+  if (!root) return;
+  root.querySelectorAll('.section').forEach(sec => {
+    if (sec.dataset.collDone) return; const h = sec.firstElementChild; if (!h || !h.matches('h2.grp, h3.grp, h2.sec-title, .sec-head')) return;
+    const rest = [...sec.children].slice(1); if (!rest.length) return;
+    const title = h.matches('.sec-head') ? h.querySelector('h2, h3') : h; if (!title) return;
+    const key = scope + ':' + title.textContent.split('·')[0].trim().toLowerCase();
+    const body = document.createElement('div'); body.className = 'coll-body'; body.dataset.collB = key; rest.forEach(r => body.appendChild(r)); sec.appendChild(body);
+    h.dataset.collT = key; h.classList.add('coll-head'); h.setAttribute('role', 'button'); h.tabIndex = 0; title.insertAdjacentHTML('beforeend', CHEV);
+    sec.dataset.collDone = '1';
+  });
+  root.querySelectorAll('[data-coll-b]').forEach(b => {
+    const key = b.dataset.collB; const def = b.dataset.collDef !== undefined ? b.dataset.collDef === '1' : collDefault(key);
+    const closed = !forceOpen && (key in collState ? collState[key] : def);
+    b.hidden = closed; root.querySelectorAll('[data-coll-t]').forEach(t => { if (t.dataset.collT !== key) return; t.classList.toggle('closed', closed); t.setAttribute('aria-expanded', String(!closed)); });
+  });
+}
+function animateColl(b, closing) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !b.animate) { b.hidden = closing; return; }
+  b.getAnimations().forEach(a => a.cancel());
+  if (closing) { const h = b.scrollHeight; b.style.overflow = 'hidden'; const a = b.animate([{ height: h + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 300, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' }); a.onfinish = () => { b.hidden = true; b.style.overflow = ''; }; }
+  else { b.hidden = false; const h = b.scrollHeight; b.style.overflow = 'hidden'; const a = b.animate([{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }], { duration: 340, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' }); a.onfinish = () => { b.style.overflow = ''; }; }
+}
+function toggleColl(t) {
+  const key = t.dataset.collT; const b = [...document.querySelectorAll('[data-coll-b]')].find(x => x.dataset.collB === key); if (!b) return;
+  const closing = !b.hidden; collState[key] = closing; try { localStorage.setItem(COLL_KEY, JSON.stringify(collState)); } catch (e) { /* ignore */ }
+  document.querySelectorAll('[data-coll-t]').forEach(x => { if (x.dataset.collT !== key) return; x.classList.toggle('closed', closing); x.setAttribute('aria-expanded', String(!closing)); });
+  animateColl(b, closing);
+}
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-coll-t]'); if (!t || (S.editHome && t.closest('#wgrid'))) return;
+  const inner = ev.target.closest('button, a, input, select, textarea, label'); if (inner && inner !== t && t.contains(inner)) return;
+  toggleColl(t);
+});
+document.addEventListener('keydown', ev => { const t = ev.target; if ((ev.key === 'Enter' || ev.key === ' ') && t.dataset && t.dataset.collT && t.tagName !== 'BUTTON') { ev.preventDefault(); toggleColl(t); } });
+
 /* ================= Coach via the Claude app ================= */
 const COACH_EXT = 'Du är min personliga träningscoach. Svara på svenska, kort och konkret. Basera dina råd på min data nedan och nämn siffror därifrån när det hjälper. Hitta inte på pass eller siffror. Vid smärta, yrsel eller skada: säg att jag ska pausa och kontakta vården. Föreslå inga extrema dieter eller mycket lågt kaloriintag. Om du föreslår ett program eller ändringar, skriv det som en lista per dag med övning och set × reps så att jag kan föra in det i min app.';
 const COACH_SUGGEST = ['Vad ska jag köra idag?', 'Hur går det för mig?', 'Varför står bänkpressen still?', 'Gör ett nytt program åt mig', 'Är min kost bra för att bygga muskler?', 'Hur ska jag öka i vikt nästa pass?'];
@@ -1908,7 +1981,8 @@ function pickerHTML(d) {
   ${groups.map(([g, l]) => `<div class="section"><h3 class="grp">${esc(g)}</h3><div class="list">${l.map(x => `<button class="row press" data-act="pick" data-v="${esc(x.name)}"><span class="main"><span class="title">${esc(x.name)}</span></span>${used.has(x.name) ? '<span class="end small">Tillagd</span>' : ''}</button>`).join('')}</div></div>`).join('')}
   ${!groups.length && !createBox ? '<p class="note">Inga träffar.</p>' : ''}</div>`;
 }
-function renderSheet() {
+function renderSheet() { renderSheetCore(); if (S.sheet) { const q = $('#foodq') || $('#pickq'); enhance($('#sheet-inner'), S.sheet.kind, !!(q && q.value.trim())); } }
+function renderSheetCore() {
   const s = S.sheet; if (!s) return; const box = $('#sheet-inner'); const d = s.data;
   if (s.kind === 'picker') {
     d.used = d.target === 'day' ? d.day.ex.map(e => e.name) : S.active.exercises.map(e => e.name);
